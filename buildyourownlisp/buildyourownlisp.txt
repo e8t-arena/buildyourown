@@ -1,0 +1,76 @@
+ch1. Introduction
+
+展示如何开发 real world program in C.
+
+书中版本的 Lisp: minimalism, simplicity, clarity
+
+ch2. Setup
+
+只需要 a text editor 和 a compiler
+
+测试 compiler
+
+cc --version
+
+测试环境正常
+
+./ch2_hello.c
+
+编译源文件
+
+cc -std=c99 -Wall ./ch2_hello.c -o a.out (hello)
+
+Error
+
+debug 工具
+
+  gdb / lldb : http://web.archive.org/web/20140910051410/http://www.dirac.org/linux/gdb/
+
+  walgrind : aid the debugging of memory leaks and other more nasty errors
+    内存泄漏
+
+ch3. Basics
+
+
+ch4. Prompt: An Interactive Prompt
+
+获取用户输入 fgets 读取输入直到 new line
+
+存储用户输入 input buffer : 2048 byte
+
+显示输入 printf
+
+- 输入编辑
+
+现在的输入中有很多不能用，
+
+输入 arrow 出现奇怪字符，而不是移动光标
+
+  windows 下表现正常，linux 和 mac 有问题
+
+需要用 editline 库替代 fputs fgets
+
+- 使用 editline
+
+两个函数 readline and add_history
+
+cc 需要用 -ledit 参数编译
+
+- C preprocessor
+
+用预处理根据操作系统引入对应库
+
+#ifdef _WIN32
+#else
+#endif
+
+ch5. Languages
+
+ch6. Basics
+ch7. Basics
+
+https://stackoverflow.com/questions/49151807/how-to-insert-variables-on-a-txt-with-fputs-c file - How to insert variables on a .txt with fputs C - Stack Overflow
+https://thrysoee.dk/editline/ Editline Library (libedit) - Port of NetBSD Command Line Editor Library
+
+https://stackoverflow.com/questions/22886475/editline-history-h-and-editline-readline-h-not-found-working-on-osx-when-trying c - editline/history.h and editline/readline.h not found/working on OSX when trying to compile with developer tools installed already - Stack Overflow
+
