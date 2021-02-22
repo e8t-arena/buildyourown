@@ -1,0 +1,116 @@
+Write Your Own:
+
+https://github.com/danistefanovic/build-your-own-x danistefanovic/build-your-own-x: 🤓 Build your own (insert technology here)
+
+  Browser:
+    https://limpet.net/mbrubeck/2014/08/08/toy-layout-engine-1.html Let's build a browser engine! Part 1: Getting started (Rust)
+
+  Shell:
+    https://www.joshmcguigan.com/blog/build-your-own-shell-rust/ Build Your Own Shell using Rust | Josh Mcguigan - The things I write
+    https://github.com/tokenrove/build-your-own-shell tokenrove/build-your-own-shell: Guidance for mollusks (WIP)
+    https://indradhanush.github.io/blog/writing-a-unix-shell-part-1/ Writing a Unix Shell - Part I – Cracking The Code (2017)
+    https://brennan.io/2015/01/16/write-a-shell-in-c/ Tutorial - Write a Shell in C • Stephen Brennan (2015)
+    https://github.com/kamalmarhubi/shell-workshop kamalmarhubi/shell-workshop: Materials from my Strange Loop 2014 workshop, Let's Build a Shell! (2014)
+
+  Terminal: text -> shell command -> exec -> return back
+    Erlang/OTP terminal Process
+      retart all session
+    https://vincent.bernat.ch/en/blog/2017-write-own-terminal
+      https://wiki.gnome.org/Apps/Terminal/VTE Apps/Terminal/VTE - GNOME Wiki!
+      https://sanctum.geek.nz/arabesque/series/unix-as-ide/ Series: Unix as IDE « Arabesque
+    https://dev.to/petercour/writing-a-terminal-emulator-in-python-38d2 Writing a Terminal emulator (in Python) - DEV Community
+    https://codekoalas.com/blog/build-your-own-minimal-terminal Build your own Minimal Terminal | Code Koalas | Kansas City Drupal Development & Digital Agency
+    https://github.com/alacritty/alacritty alacritty/alacritty: A cross-platform, GPU-accelerated terminal emulator
+    https://www.uninformativ.de/blog/postings/2018-02-24/0/POSTING-en.html The very basics of a terminal emulator
+    https://github.com/kovidgoyal/kitty kovidgoyal/kitty: A cross-platform, fast, feature full, GPU based terminal emulator
+      https://news.ycombinator.com/item?id=17924472 Theres no way you can build a terminal emulator without a PTY and still expect t... | Hacker News
+    https://stackoverflow.com/questions/22351018/difference-between-bash-shell-uxterm-and-terminal linux - Difference between Bash, Shell, UXTerm and Terminal - Stack Overflow
+    https://unix.stackexchange.com/questions/4126/what-is-the-exact-difference-between-a-terminal-a-shell-a-tty-and-a-con/4132#4132 What is the exact difference between a 'terminal', a 'shell', a 'tty' and a 'console'? - Unix & Linux Stack Exchange
+    https://github.com/alacritty/vtebench alacritty/vtebench: Generate benchmarks for terminal emulators 性能测试
+
+
+  OS:
+    Workspace/tmp/30d_OS
+    Documents/Dororis/cache/qemu-001
+
+  Database:
+    Rust SQLite
+    C SQLite
+
+  Container:
+
+    https://www.infoq.com/articles/build-a-container-golang/
+
+  Editor:
+
+    Simple Editor in C
+
+      http://viewsourcecode.org/snaptoken/kilo/01.setup.html
+
+  Compiler && Interpreter:
+
+    WebAssembly Compiler
+
+      https://blog.scottlogic.com/2019/05/17/webassembly-compiler.html
+      https://medium.com/@seanchen/a-scheme-to-webassembly-compiler-part-0-d1ff2501565a
+      https://medium.com/jspoint/the-anatomy-of-webassembly-writing-your-first-webassembly-module-using-c-c-d9ee18f7ac9b
+
+    LISP
+
+      build-a-simple-lisp
+
+        http://www.buildyourownlisp.com/
+
+    Custom
+
+      craftinterpreter
+      LLVM
+        https://llvm.org/docs/tutorial/ Kaleidoscope: Implementing a Language with LLVM
+
+
+Refs:
+
+https://emscripten.org/ Main — Emscripten 2.0.0 documentation
+
+
+bookmark/bookmark.txt:253:http://anantgarg.com/2009/03/13/write-your-own-php-mvc-framework-part-1/
+bookmark/bookmark.txt:402:https://hackernoon.com/build-your-own-react-48edb8ed350d
+bookmark/bookmark.txt:404:https://medium.com/@calebmer/write-your-own-react-js-776dbef98b8
+bookmark/bookmark.txt:562:  https://www.caveofprogramming.com/c-sharp-tutorial/c-for-beginners-make-your-own-mp3-player-free.html
+
+JavaScript Framework
+
+- https://dev.to/carlmungazi/turning-class-app-extends-react-component-into-a-coding-lesson-3mod
+
+
+JavaScript bundler
+
+
+- https://www.freecodecamp.org/news/lets-learn-how-module-bundlers-work-and-then-write-one-ourselves-b2e3fe6c88ae/
+
+- https://github.com/ronami/minipack
+
+- https://irian.to/blogs/bundle-your-javascript-code-from-scratch/
+
+- https://lihautan.com/i-wrote-my-module-bundler/
+
+Operation System
+
+- Rust OS
+
+Database
+
+- https://cstack.github.io/db_tutorial/
+- https://www.codeproject.com/Articles/1029838/Build-Your-Own-Database
+
+Docker
+
+JVM
+
+HugoTheme
+  https://zwbetz.com/make-a-hugo-blog-from-scratch/
+
+Surge.sh / Static Website Hoster
+  upload
+  config nginx/caddy server
+  CDN
