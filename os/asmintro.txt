@@ -1,0 +1,14 @@
+- 递归
+
+loop:
+  jmp loop
+
+- 使用中断
+
+mov ah, 0x0e ; 赋值
+mov al, 'V'
+int 0x10   ; 中断
+
+- jmp $
+
+https://stackoverflow.com/questions/10361231/what-does-the-dollar-sign-mean-in-x86-assembly-when-calculating-string-lengt What does the dollar sign ($) mean in x86 assembly when calculating string lengths like "$ - label"? - Stack Overflow
