@@ -1,0 +1,25 @@
+# Stack
+
+栈（stack）：是限定仅在表尾进行插入和删除操作的线性表。
+
+我们允许插入和删除的一端称为栈顶（top），另一端称为栈底（bottom），不含任何数据元素的栈称为空栈。
+
+栈又称作后进先出（Last In First Out）的线性表
+
+栈的插入操作称为进栈，压栈，入栈
+
+栈的删除操作称为出栈，弹栈
+
+数组实现中
+
+  栈底为数据索引 0 处 (没有硬性要求)
+
+  随着数据添加 栈顶索引值增加
+
+https://www.jianshu.com/p/f3fa01429e31 数据结构——栈 - 简书
+
+https://www.jianshu.com/p/711224436f8e 4.数据结构--栈与队列 - 简书
+
+https://www.jianshu.com/p/220d05f407a2 数据结构 栈和队列 - 简书
+
+https://www.cxyxiaowu.com/8500.html LeetCode 图解 | 232.使用栈实现队列-五分钟学算法
