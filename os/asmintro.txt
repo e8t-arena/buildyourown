@@ -12,3 +12,154 @@ int 0x10   ; 中断
 - jmp $
 
 https://stackoverflow.com/questions/10361231/what-does-the-dollar-sign-mean-in-x86-assembly-when-calculating-string-lengt What does the dollar sign ($) mean in x86 assembly when calculating string lengths like "$ - label"? - Stack Overflow
+
+- ax bx cx dx
+
+https://www.tutorialspoint.com/assembly_programming/assembly_registers.htm# Assembly - Registers - Tutorialspoint
+
+IA-32 architecture
+
+  32-bit 有 10 个
+
+  16-bit 有 6 个
+
+分类
+  General registers
+    Data registers
+    Pointer registers (地址)
+    Index registers
+  Control registers
+  Segment registers
+
+1. Data registers
+
+ax accumulator 用于输入输出，数值计算
+
+  ah al
+
+bx base 用于 indexed addressing
+
+  bh bl
+
+cx counter 用于循环中计数
+
+dx data 输入输出，经常和 ax 一起使用
+
+2. Pointer
+
+Instruction Pointer (ip)
+
+  下一个 instruction 执行的地址 与 Code Segemrnt register 关联 CS:IP
+
+  得出当前指令在 code segment 中地址
+
+Stack Pointer (sp)
+
+  提供程序 stack 的偏移 offset
+  与 SS register 结合得出当前 stack 中程序数据或地址
+
+Base Pointer (bp)
+
+  记录传入 subroutine 的参数地址
+  SS register 地址和 bp 一起使用能计算出参数地址
+  也能和 si di 一起使用作为特殊地址的 base register
+
+
+3. Index
+
+Source Index (si)
+
+  字符串操作的 source index
+
+Destinaion Index (di)
+
+  字符串操作的 dest index
+
+头尾?
+
+4. Control
+
+比较和数值计算中测试这些状态位值，来控制到其他位置
+
+Overflow Flag (of)
+
+  表示高位比特 high-order bit (leftmost) 数据是否在进行有符号数值计算后是否溢出
+
+Direction Flag (df)
+
+  决定移动或比较字符串数据的顺序是向右还是向左
+
+  0 left-to-right
+
+  1 right-to-left
+
+Interrupt Flag (if)
+
+  表示忽略或处理外部中断，如用户输入
+
+  0 disable/ignroe
+
+  1 enable/process
+
+Trap Flag (tf)
+
+  将处理器模式设置为 single-step mode 单步模式，用于 DEBUG 程序
+
+
+Sign Flag (sf)
+
+  被 hight-order of leftmost bit 决定
+
+  标明计算结果符号
+
+  正值清空它的值并设置为 0
+
+  负值设置为 1
+
+Zero Flag (zf)
+
+  标明计算结果或比较结果
+
+  nonzero 置为 0
+
+  zero 置为 1
+
+Auxiliary Carry Flag (af)
+
+
+
+Parity Flag (pf)
+
+Carry Flag (cf)
+
+5. Segment Registers
+
+Code Segment (cs)
+
+  全部可执行的指令。存储首地址
+
+Data Segment (ds)
+
+  全部的 data constants 和 work areas。存储首地址
+
+Stack Segment (ss)
+
+  data 和 procedures or subroutines 的返回值地址
+
+  作为 stack 数据结构实现, 保存 stack 的 starting address
+
+https://stackoverflow.com/questions/15191178/how-do-ax-ah-al-map-onto-eax# assembly - How do AX, AH, AL map onto EAX? - Stack Overflow
+
+EAX= 0000 0000 0000 0000 0000 0000 0000 0111
+
+AX = 0000 0000 0000 0111
+
+AH = 0000 0000
+
+AL = 0000 0111
+
+
+
+Q&A:
+
+1. asm 或者 NASM 可以省略 section 部分?
