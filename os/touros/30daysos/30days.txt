@@ -1,0 +1,33 @@
+Day1 汇编入门
+
+helloos.img 十六进制
+
+helloos.nas 直接翻译为汇编
+  DB
+
+helloos1.nas 稍短的汇编
+  DB 
+  RESB
+
+helloos2.nas 带注释的汇编
+
+有多种启动方式
+  - 自己写 boot sector 
+  - GRUB multiboot
+dd if=bootloader of=littleos.img count=1 bs=512
+dd if=/dev/zero of=littleos.img bs=512 seek=1 skip=1 count=2879
+qemu-system-i386 -drive format=raw,file=littleos.img
+
+refs:
+  https://stackoverflow.com/questions/21300929/how-many-characters-can-you-store-with-1-byte
+  https://os.phil-opp.com/edition-1/
+  https://os.phil-opp.com/
+  https://stackoverflow.com/questions/64740190/loading-and-running-a-raw-binary-file-with-32-bit-code-in-qemu
+
+Day2
+
+
+https://www.pornhub.com/view_video.php?viewkey=ph5eb5113226198
+https://www.pornhub.com/view_video.php?viewkey=ph5f59f35e5ca7a
+https://www.pornhub.com/view_video.php?viewkey=ph5ebe98b9c4d53
+https://www.pornhub.com/view_video.php?viewkey=ph605b3e2b64043
