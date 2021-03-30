@@ -39,6 +39,7 @@ entry:
   MOV DH, 0       ; 磁头 0
   MOV CL, 2       ; 扇区 2
 
+readloop:
   MOV SI, 0       ; 记录尝试读取扇区失败次数
 
 retry:
@@ -48,7 +49,7 @@ retry:
   MOV DL, 0x00    ; A 驱动器
 
   INT 0x13
-  JNC fin     ; 读取正常，进入 fin 
+  JNC next     ; 读取正常，进入 fin 
 
   ADD SI, 1       ; 读取出错，SI + 1
   CMP SI, 5       ; 设置最多尝试次数: 5
@@ -59,6 +60,16 @@ retry:
   INT 0x13
   JMP retry
 
+; 逐个扇区读取，将磁盘加载到内存 0x8200 - 0xa3ff
+; 扇区读到 C0-H1-S18
+; 下一个将是 C1-H0-S1
+next:
+  MOV AX, ES      ; 内存地址后移 0x200
+  ADD AX, 0x0020  
+  MOV ES, AX      ; 利用 AX 完成后移
+  ADD CL, 1       ; 扇区号 + 1
+  CMP CL, 18      ; 读取到 18 停止
+  JBE readloop    ; <= 18 跳转到 readloop
 loop:
   MOV AL, [SI]
   ADD SI, 1
