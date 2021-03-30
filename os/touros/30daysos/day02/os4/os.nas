@@ -4,8 +4,7 @@ ORG 0x7c00 ; 装载程序的内存位置
 
 JMP entry ; 跳转到下边 entry 标签位置
 
-; DB 0xeb, 0x4e, 0x90
-DB 0x90
+DB 0xeb, 0x4e, 0x90
 ; 启动区名字 8 byte 内任意 **不足 8 需要补全
 ; 8 bytes = 8 characters (in ASCII Code)
 ; In general, 1 byte = 1 ASCII character. 2 bytes = 1 UTF-16 character.
@@ -47,9 +46,9 @@ loop:
   ADD SI, 1
   CMP AL, 0 
   JE  fin
-  MOV AH, 0x0e  ; 显示文字
-  MOV BX, 15    ; 设置字符颜色
-  INT 0x10      ; 显示 (调用显卡)
+  MOV AH, 0x2e 
+  MOV BX, 15 
+  INT 0x10
   JMP loop 
 
 fin:
@@ -61,8 +60,3 @@ msg:
   DB "Good Job"
   DB 0x0a 
   DB 0
-
-; RESB 0x1fe-$
-; 用于识别为操作系统
-RESB 0x1fe-($-$$)
-DB 0x55, 0xaa
