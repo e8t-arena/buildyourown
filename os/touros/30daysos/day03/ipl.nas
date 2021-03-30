@@ -1,5 +1,7 @@
 ; 描述 标准FAT12 格式
 
+CYLS EQU 10       ; 定义常数
+
 ORG 0x7c00        ; 装载程序的内存位置
 
 JMP entry         ; 跳转到下边 entry 标签位置
@@ -70,6 +72,17 @@ next:
   ADD CL, 1       ; 扇区号 + 1
   CMP CL, 18      ; 读取到 18 停止
   JBE readloop    ; <= 18 跳转到 readloop
+  
+  MOV CL, 1
+  ADD DH, 1
+  CMP DH, 2
+  JB  readloop    ; DH < 2 继续读取下一个磁头
+
+  MOV DH, 0       ; DH = 2 继续读取下一个柱面
+  ADD CH, 1
+  CMP CH, CYLS 
+  JB  readloop
+
 loop:
   MOV AL, [SI]
   ADD SI, 1
