@@ -51,7 +51,7 @@ retry:
   MOV DL, 0x00    ; A 驱动器
 
   INT 0x13
-  JNC next     ; 读取正常，进入 fin 
+  JNC next        ; 读取正常，进入 fin / next
 
   ADD SI, 1       ; 读取出错，SI + 1
   CMP SI, 5       ; 设置最多尝试次数: 5
@@ -83,6 +83,8 @@ next:
   CMP CH, CYLS 
   JB  readloop
 
+  JMP 0xc200      ; 跳转到 os.nas 加载位置
+
 loop:
   MOV AL, [SI]
   ADD SI, 1
@@ -96,9 +98,9 @@ loop:
 error:
   MOV SI, errormsg 
 
-fin:
-  HLT
-  JMP fin 
+; fin:
+;   HLT
+;   JMP fin 
 
 errormsg:
   DB 0x0a, 0x0a   ; 两次换行
