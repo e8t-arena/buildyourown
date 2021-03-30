@@ -39,8 +39,21 @@ entry:
   MOV SS, AX 
   MOV SP, 0x7c00
   MOV DS, AX 
-  MOV ES, AX 
-  MOV SI, msg 
+
+  ; 加载下一个 512 字节内容
+  MOV AX, 0x0820
+  MOV ES, AX
+  MOV CH, 0     ; 柱面 0
+  MOV DH, 0     ; 磁头 0
+  MOV CL, 2     ; 扇区 2
+
+  MOV AH, 0x02  ; AH = 0x02 读取扇区
+  MOV AL, 1     ; 读取一个扇区
+  MOV BX, 0 
+  MOV DL, 0x00  ; A 驱动器
+
+  INT 0x13
+  JC  error
 
 loop:
   MOV AL, [SI]
@@ -52,13 +65,16 @@ loop:
   INT 0x10      ; 显示 (调用显卡)
   JMP loop 
 
+error
+  MOV SI, msg 
+
 fin:
   HLT
   JMP fin 
 
 msg:
   DB 0x0a, 0x0a  ; 两次换行
-  DB "Good Job"
+  DB "LOAD ERROR"
   DB 0x0a 
   DB 0
 
