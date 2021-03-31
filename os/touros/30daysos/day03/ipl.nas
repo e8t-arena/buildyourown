@@ -1,15 +1,10 @@
-; 描述 标准FAT12 格式
-
-CYLS EQU 10       ; 定义常数
-
-ORG 0x7c00        ; 装载程序的内存位置
-
-JMP entry         ; 跳转到下边 entry 标签位置
-
+CYLS EQU 10
+ORG 0x7c00
+JMP entry
 DB 0x90
-DB "TINYOS  "     ; 启动区名字 8 byte 内任意 **不足 8 需要补全
-DW 512            ; 单个扇区 sector 大小 必须是 512 bytes
-DB 1              ; 簇 cluster 大小 必须为 1 个扇区
+DB "TINYOS  "
+DW 512
+DB 1
 DW 1              ; FAT 起始位置
 DB 2 
 DW 224
@@ -83,7 +78,11 @@ next:
   CMP CH, CYLS 
   JB  readloop
 
+  MOV [0x0ff0], CH  ; CH 值等于 CYLS
   JMP 0xc200      ; 跳转到 os.nas 加载位置
+
+error:
+  MOV SI, errormsg 
 
 loop:
   MOV AL, [SI]
@@ -95,12 +94,9 @@ loop:
   INT 0x10        ; 显示 (调用显卡)
   JMP loop 
 
-error:
-  MOV SI, errormsg 
-
-; fin:
-;   HLT
-;   JMP fin 
+fin:
+  HLT
+  JMP fin 
 
 errormsg:
   DB 0x0a, 0x0a   ; 两次换行
@@ -108,17 +104,8 @@ errormsg:
   DB 0x0a 
   DB 0
 
-display:
-  MOV SI, msg 
-  JMP loop
-
-msg:
-  DB 0x0a, 0x0a   ; 两次换行
-  DB "LOAD floppy"
-  DB 0x0a 
-  DB 0
-
-; RESB 0x1fe-$
 ; 用于识别为操作系统
+; RESB 0x1fe-$
+; times 510 - ($-$$) db 0 ; 一种方法
 RESB 0x1fe-($-$$)
 DB 0x55, 0xaa

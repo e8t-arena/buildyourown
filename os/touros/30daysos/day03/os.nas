@@ -1,5 +1,6 @@
 ; haribote.nas
 
+  ; 0x8000+0x4200
   ORG 0xc200
 
   MOV AL, 0x13
