@@ -80,8 +80,8 @@ next:
   JB  readloop
 
   MOV [0x0ff0], CH  ; CH 值等于 CYLS
-  ; JMP 0xc200        ; 跳转到 os.nas 加载位置
-	jmp 	0x8200
+  JMP 0xc200        ; 跳转到 os.nas 加载位置
+	; jmp 	0x8200
 
 error:
   MOV SI, errormsg 

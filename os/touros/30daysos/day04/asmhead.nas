@@ -14,7 +14,10 @@ SCRNY	EQU		0x0ff6			; 해상도의 Y
 VRAM	EQU		0x0ff8			; 그래픽 버퍼의 개시 번지
 
 [bits 16]
-[org 0x8200]
+
+ORG 0xc200
+
+;[org 0x8200]
 
 ; 화면 모드를 설정
 
@@ -175,5 +178,6 @@ GDTR0:
 
 		ALIGNB	16
 
-times 512 - ($-$$) db 0 ; 0x7dfe까지를 0x00로 채우는 명령
+; 载入地址 0xc200 不需要下边这行
+; times 512 - ($-$$) db 0 ; 0x7dfe까지를 0x00로 채우는 명령
 bootpack:
