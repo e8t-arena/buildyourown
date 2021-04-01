@@ -1,0 +1,6 @@
+*.bin
+*.img
+*.sys
+*.o
+
+tmp
