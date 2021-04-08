@@ -18,7 +18,7 @@ void HariMain(void)
   // mov byte [i], 15
   // 15 是全部颜色的第十五种颜色，即纯白色
   for (i = 0xa0000; i <= 0xaffff; i++) {
-    write_mem8(i, 15);
+    write_mem8(i, i & 0x0f);
   }
 
   for (;;) {
