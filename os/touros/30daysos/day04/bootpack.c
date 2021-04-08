@@ -25,7 +25,8 @@ void HariMain(void)
     // p = i;
     /* p = (char *) i; */
     /* *p = i & 0x0f; */
-    *(p + i) = i & 0x0f;
+    /* *(p + i) = i & 0x0f; */
+    p[i] = i & 0x0f;
   }
 
   for (;;) {
