@@ -1,0 +1,103 @@
+Writing a sqlite clone from scratch in C
+
+https://cstack.github.io/db_tutorial/
+
+# Ch 00 Overview
+
+Database 工作原理
+
+- 以什么形式存储数据？内存还是硬盘
+- 何时将数据从内存移到硬盘
+- 为什么每个表只有一个主键
+- 事务如何回滚
+- 索引是如何设计的
+- 何时，以及如何进行全表扫描
+- 预执行语句是以什么形式保存的
+
+"What I cannot create, I do not understand." - Richard Feynman
+
+# Ch 01 简介，实现 REPL
+
+1. Sqlite
+
+Sqlite 特点，整个数据库保存在单个文件中。
+
+Sqlite 设计
+
+  Tokenizer
+
+  Parser
+
+  Code Generator
+
+  Virtual Machine
+
+  B-Tree
+
+  Pager
+
+  OS Interface
+
+前端，处理 query 输入 SQL query，输出 sqlite virtual machine bytecode
+  （编译后的可在数据库执行代码）
+
+  tokenizer
+  parser
+  code generator
+
+后端
+
+  virtual machine
+    处理前端生成的 bytecode。
+    然后在多个表和索引上执行操作，每个表或索引保存在 B-tree 数据结构中
+
+  B-tree
+    每个 B-tree 有很多节点，每个节点是 one page in length。
+    B-tree 可以从硬盘获取 page 或写入硬盘
+
+  pager
+    接收命令，读写 pages of data。保留缓存最近访问的 pages 在内存。
+    决定何时将缓存 pages 写回硬盘。
+
+  os interface
+
+2. 写个简单的 REPL
+
+.exit 退出
+
+# Ch 02 最简单 SQL 编译器和虚拟机
+
+sqlite 的 front-end 是 SQL 编译器 
+
+解析 string 并输出被称为 bytecode 的内部表示形式
+bytecode 再被传递给 虚拟机执行
+
+两步走好处
+  - 减少每个部分的复杂度，虚拟机不需要关心语法错误
+  - 能够缓存常用查询的 bytecode 提高性能
+
+非 SQL 命令用 . 开始，叫做 meta-command 
+
+SQL 命令支持两种 insert select 
+
+do_meta_command 中就是对上一节命令处理部分的封装
+C 中声明两个指针 char *p, *q;
+
+# Ch 03 内存，单表，只能追加的数据库
+
+一些限制
+
+支持 insert 和打印全部行
+只保存在内存里
+只支持单个固定表名的表
+
+支持列名和数据类型
+
+id        integer
+username  varchar(32)
+email     varchar(255)
+# Ch 01 简介，实现 REPL
+Refs:
+
+getline
+  https://man7.org/linux/man-pages/man3/getline.3.html getline(3) - Linux manual page

@@ -20,6 +20,28 @@ InputBuffer* new_input_buffer()
   return input_buffer;
 }
 
+typedef enum {
+  META_COMMAND_SUCCESS,
+  // 用枚举值处理异常，C 不支持异常处理
+  META_COMMAND_UNRECOGNIZED_COMMAND
+} MetaCommandResult;
+
+typedef enum {
+  PREPARE_SUCCESS,
+  PREPARE_UNRECOGNIZED_STATEMENT
+} PrepareResult;
+
+typedef enum {
+  STATEMENT_INSERT,
+  STATEMENT_SELECT
+} StatementType;
+
+typedef struct {
+  StatementType type;
+} Statement;
+
+// Helper
+
 void print_prompt() { printf("DB > "); }
 
 void read_input(InputBuffer* input_buffer) 
@@ -48,6 +70,45 @@ void close_input_buffer(InputBuffer* input_buffer)
   free(input_buffer);
 }
 
+MetaCommandResult do_meta_command(InputBuffer *input_buffer)
+{
+  if (strcmp(input_buffer->buffer, ".exit") == 0) {
+    printf("Done. Good Bye ~~~\n");
+    exit(EXIT_SUCCESS);
+  } else {
+    return META_COMMAND_UNRECOGNIZED_COMMAND;
+  }
+}
+
+PrepareResult prepare_statement(InputBuffer *input_buffer, Statement *statement)
+{
+  // 比较至少前 n 字符 支持 "insert xxx"
+  if (strncmp(input_buffer->buffer, "insert", 6) == 0) {
+    statement->type = STATEMENT_INSERT;
+    return PREPARE_SUCCESS;
+  }
+  if (strcmp(input_buffer->buffer, "select") == 0) {
+    statement->type = STATEMENT_SELECT;
+    return PREPARE_SUCCESS;
+  }
+  return PREPARE_UNRECOGNIZED_STATEMENT;
+}
+
+void execute_statement(Statement *statement)
+{
+  switch (statement->type) {
+    case (STATEMENT_INSERT):
+     printf("do insert\n"); 
+      break;
+    case (STATEMENT_SELECT):
+     printf("do select\n"); 
+      break;
+    default:
+      printf("default\n");
+  }
+}
+
+
 // 无限循环 infinite loop
 int main(int argc, char* argv[])
 {
@@ -57,13 +118,27 @@ int main(int argc, char* argv[])
     print_prompt();
     read_input(input_buffer);
 
-    if (strcmp(input_buffer->buffer, ".exit") == 0) 
-    {
-      close_input_buffer(input_buffer);
-      printf("Good Bye ~\n");
-      exit(EXIT_SUCCESS);
-    } else {
-      printf("Unrecognized commannd '%s'.\n", input_buffer->buffer);
+    if (input_buffer->buffer[0] == '.') {
+      // 第一个字符是 . 
+      switch (do_meta_command(input_buffer)) {
+        case (META_COMMAND_SUCCESS):
+          continue;
+        case (META_COMMAND_UNRECOGNIZED_COMMAND):
+          printf("Unrecognized command: '%s'\n", input_buffer->buffer);
+          continue;
+      }
     }
+
+    Statement statement;
+    switch (prepare_statement(input_buffer, &statement)) {
+      case (PREPARE_SUCCESS):
+        break;
+      case (PREPARE_UNRECOGNIZED_STATEMENT):
+        printf("Unrecognized keyword at start of '%s'.\n", input_buffer->buffer);
+        continue;
+    }
+
+    execute_statement(&statement);
+    printf("Executed: %s\n", input_buffer->buffer);
   }
 }
