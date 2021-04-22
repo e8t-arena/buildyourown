@@ -96,6 +96,65 @@ C 中声明两个指针 char *p, *q;
 id        integer
 username  varchar(32)
 email     varchar(255)
+
+insert 语句: 
+
+insert 1 Pony pony@craft.com
+
+prepare_statement 需要能处理参数
+
+使用 raw Data Structure 保存从命令中解析 sscanf 的数据
+
+解析后的数据存储设计。sqlite 使用 b-tree 实现快速查询 插入 删除
+
+这里设计简单点。b-tree 是先把数据分组形成 page 再构建成 tree，这里用 array
+
+在 page 中保存 row
+每个 page 保存尽可能多 row 
+row 被序列化为简单形式
+只分配内存给需要的 pages
+保持固定大小指向page的指针数组
+
+
+定义 row 的序列化形式
+
+(id)(username)(email)
+
+共 291 bytes
+记录每个数据的 size  offset
+
+size_of_attr
+  https://stackoverflow.com/questions/3553296/sizeof-single-struct-member-in-c
+
+序列化 和 反序列化
+
+  看参数确定 memcpy 方向
+
+memcpy(内存地址, 数据, 大小)
+
+memcpy(dest, src, size)
+
+https://en.cppreference.com/w/c/string/byte/memcpy
+
+struct Table 
+
+保存 pages 信息，追踪 pages 数量
+
+page 大小 4k, 大部分系统以 4k 作为虚拟内存 page 大小。数据库 page 大小和内存 page 大小一样，操作系统能够整体读取读入数据
+  http://www.cs.rpi.edu/academics/courses/fall04/os/c12/
+
+采用 tree 结构的话，理论上 pages 数量仅受磁盘空间限制
+
+写一个读取特定 row 的函数
+  page 编号为数组下标 0-based
+
+执行语句
+  写入或读取 table
+
+
+# Ch 04 测试
+https://cstack.github.io/db_tutorial/parts/part4.html
+
 # Ch 01 简介，实现 REPL
 Refs:
 
