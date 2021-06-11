@@ -1,0 +1,73 @@
+# Step zero
+
+JSX 转 JS
+  replace the code inside the tags with a call to createElement, 
+  passing 
+    the tag name, 
+    the props
+    the children as parameters.
+
+title="foo"
+
+<h1>Hello {title}</h1> 
+
+const element = <h1 title="foo">Hello</h1>
+const container = document.getElementById("root")
+ReactDOM.render(element, container)
+
+JSX 转为
+
+const element = React.createElement(
+  "h1",
+  { title: "foo" },
+  "Hello"
+)
+
+React.createElement 输出
+
+const element = {
+  type: "h1",
+  props: {
+    title: "foo",
+    children: "Hello",
+  },
+}
+
+ReactDOM.render()
+
+const node = document.createElement(element.type)
+node["title"] = element.props.title
+
+const text = document.createTextNode("")
+text["nodeValue"] = element.props.children
+
+# step 1 创建 createElement
+
+const element = (
+  <div id="foo">
+    <a>bar</a>
+    <b />
+  </div>
+)
+const container = document.getElementById("root")
+ReactDOM.render(element, container)
+
+
+https://www.snowpack.dev/tutorials/react
+
+npx create-snowpack-app litereact --template @snowpack/app-template-minimal
+
+mv index.js index.jsx
+
+  export default {
+    mount: {
+-     /* ... */
++     // directory name: 'build directory'
++     public: '/',
++     src: '/dist',
+    },
+  };
+
+npm install react react-dom --save
+npm i react react-dom
+npm start
