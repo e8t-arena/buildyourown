@@ -184,7 +184,16 @@ updateNode
   isProperty
   特别处理 event key.startsWith('on')
 
-# step 7
+# step 7 Function Components
+
+function component 没有 DOM node 
+
+children 来自 function 而非来自 props
+
+commitWork 需要改动
+  find the parent of a DOM node
+  删除节点时
+    keep going until we find a child with a DOM node
 
 # step 8
 

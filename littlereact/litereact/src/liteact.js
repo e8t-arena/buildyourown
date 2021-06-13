@@ -58,18 +58,26 @@ function workLoop(deadline) {
 }
 
 function performUnitOfWork(fiber) {
-  // add node
-  if(!fiber.node) {
-    fiber.node = createNode(fiber)
+  const isFunctionComponent = fiber.type instanceof Function 
+
+  if(isFunctionComponent) {
+    updateFunctionComponent(fiber)
+  } else {
+    updateHostComponent(fiber)
   }
+
+  // add node
+  // if(!fiber.node) {
+  //   fiber.node = createNode(fiber)
+  // }
 
   // if(fiber.parent) {
   //   fiber.parent.node.appendChild(fiber.node)
   // }
 
   // create new fiber/children
-  const children = fiber.props.children 
-  reconcileChildren(fiber, children)
+  // const children = fiber.props.children 
+  // reconcileChildren(fiber, children)
 
   // return next unit of work
 
@@ -87,6 +95,21 @@ function performUnitOfWork(fiber) {
     // return parent -> return parent.sibling
     nextFiber = nextFiber.parent
   }
+}
+
+function updateFunctionComponent(fiber) {
+  log('function component: ', fiber)
+  // 调用 Function Component 的 function 返回 node
+  const children = [fiber.type(fiber.props)]
+  reconcileChildren(fiber, children)
+}
+
+function updateHostComponent(fiber) {
+  if(!fiber.node) {
+    fiber.node = createNode(fiber)
+  }
+  const children = fiber.props.children 
+  reconcileChildren(fiber, children)
 }
 
 function reconcileChildren(wipFiber, children) {
@@ -257,12 +280,18 @@ function updateNode(node, prevProps, nextProps) {
 // 递归添加 dom 
 
 function commitWork(fiber) {
-  if(!fiber) return 
+  if(!fiber) return
+
   log('commit child:')
   log(fiber.node)
 
-  const nodeParent = fiber.parent.node 
+  let nodeParentFiber = fiber.parent
+  while(!nodeParentFiber.node) {
+    nodeParentFiber = nodeParentFiber.parent
+  }
+  const nodeParent = nodeParentFiber.node 
   log('nodeParent: ', nodeParent)
+
   if(fiber.effectTag === ADD_TAG && fiber.node != null) {
     nodeParent.appendChild(fiber.node)
   } else if (fiber.effectTag === UPDATE_TAG && fiber.node != null) {
@@ -274,11 +303,20 @@ function commitWork(fiber) {
       fiber.props
     )
   } else if (fiber.effectTag === DELETE_TAG) {
-    nodeParent.removeChild(fiber.node)
+    // nodeParent.removeChild(fiber.node)
+    commitDeletion(fiber, nodeParent)
   }
   // fiber.parent.node.appendChild(fiber.node)
   commitWork(fiber.child)
   commitWork(fiber.sibling)
+}
+
+function commitDeletion(fiber, nodeParent) {
+  if(fiber.node) {
+    nodeParent.removeChild(fiber.node)
+  } else {
+    commitDeletion(fiber.child, nodeParent)
+  }
 }
 
 function render(element, container) {
