@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom'
 
 const TEXT_ELEMENT = 'TEXT_ELEMENT'  // Symbol
 
+const log = console.log
+
 function createElement(type, props, ...children) {
 	return {
 		type, 
@@ -27,14 +29,35 @@ function createTextElement(text) {
 	}
 }
 
+function render(element, container) {
+	const node = element.type === TEXT_ELEMENT
+		? document.createTextNode(element.props.nodeValue)
+		: document.createElement(element.type)
+	
+	Object.keys(element.props)
+		.filter(key => key !== 'children')
+		.forEach(name => {
+			node[name] = element.props[name]
+		})
+	
+	// render children
+	element.props.children.forEach(child => 
+		render(child, node)
+	)
+
+	log(node)
+	container.appendChild(node)
+}
+
 const Liteact = {
-	createElement
+	createElement,
+	render,
 }
 
 const element = Liteact.createElement(
 	"div",
 	{id: "foo"},
-	Liteact.createElement("a", null, "bar"),
+	Liteact.createElement("a", {href: "https://dev.to", style: "color: blue;font-size: 5rem;", target: "_blank"}, "Dev.to"),
 	Liteact.createElement("b")
 )
 
@@ -52,7 +75,7 @@ const elementJSX = (
 	</div>
 )
 
-ReactDOM.render(
+Liteact.render(
 	// <div>Works</div>,
 	element,
 	document.getElementById('root')

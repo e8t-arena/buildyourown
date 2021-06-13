@@ -64,8 +64,17 @@ name our library: Liteact
 
 adding stuff to the DOM
 
+creating the DOM node using the element type
 
+append the new node to the container
 
+递归渲染 children
+
+当 element.type 为 TEXT_ELEMENT 时，使用 document.createTextNode(value)
+
+assign the element props to the node 
+
+  element.props 其中过滤掉 children 部分
 
 https://www.snowpack.dev/tutorials/react
 
