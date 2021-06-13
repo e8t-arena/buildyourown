@@ -97,7 +97,7 @@ function reconcileChildren(wipFiber, children) {
 
   while (index < children.length || oldFiber != null) {
     const child = children[index]
-    // let newFiber = null
+    let newFiber = null
     // const newFiber = {
     //   type: child.type,
     //   props: child.props,
@@ -145,7 +145,8 @@ function reconcileChildren(wipFiber, children) {
 
     if(index === 0) {
       // 设置 child
-      fiber.child = newFiber
+      // fiber.child = newFiber
+      wipFiber.child = newFiber
     } else {
       // prevSibling 是前一个 child 
       // 设置 sibling
@@ -161,20 +162,26 @@ requestIdleCallback(workLoop)
 /* render */
 
 function createNode(fiber) {
-	const node = element.type === TEXT_ELEMENT
-		? document.createTextNode(element.props.nodeValue)
-		: document.createElement(element.type)
+  log(fiber.props)
+
+	const node = fiber.type === TEXT_ELEMENT
+		? document.createTextNode('')
+		// ? document.createTextNode(fiber.props.nodeValue)
+		: document.createElement(fiber.type)
 	
-	Object.keys(element.props)
+	Object.keys(fiber.props)
 		.filter(key => key !== 'children')
 		.forEach(name => {
-			node[name] = element.props[name]
+			node[name] = fiber.props[name]
 		})
 	
 	// render children
-	element.props.children.forEach(child => 
-		render(child, node)
-	)
+
+	// fiber.props.children.forEach(child => 
+	// 	render(child, node)
+	// )
+
+  updateNode(node, {}, fiber.props)
 
 	log(node)
 	// container.appendChild(node)
@@ -255,6 +262,7 @@ function commitWork(fiber) {
   log(fiber.node)
 
   const nodeParent = fiber.parent.node 
+  log('nodeParent: ', nodeParent)
   if(fiber.effectTag === ADD_TAG && fiber.node != null) {
     nodeParent.appendChild(fiber.node)
   } else if (fiber.effectTag === UPDATE_TAG && fiber.node != null) {
@@ -284,6 +292,7 @@ function render(element, container) {
   deletions = []
   nextUnitOfWork = wipRoot
 }
+
 /* library */
 
 const Liteact = {
