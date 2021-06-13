@@ -8,6 +8,7 @@ const log = console.log
 /* create node */
 
 function createElement(type, props, ...children) {
+  log(children)
 	return {
 		type, 
 		props: {
@@ -58,6 +59,7 @@ function workLoop(deadline) {
 }
 
 function performUnitOfWork(fiber) {
+  // log('performUnitOfWork: ', fiber)
   const isFunctionComponent = fiber.type instanceof Function 
 
   if(isFunctionComponent) {
@@ -88,6 +90,7 @@ function performUnitOfWork(fiber) {
   let nextFiber = fiber
   // Preorder (Root, Left, Right) Traversal
   while(nextFiber) {
+    log('while: ', nextFiber)
     if(nextFiber.sibling) {
       // return sibling
       return nextFiber.sibling
@@ -97,14 +100,60 @@ function performUnitOfWork(fiber) {
   }
 }
 
+// 在 useState 中使用
+let wipFiber = null
+let hookIndex = null 
+
 function updateFunctionComponent(fiber) {
-  log('function component: ', fiber)
+  wipFiber = fiber
+  // keep track of the current hook index.
+  hookIndex = 0
+  // support 多次调用 useState
+  wipFiber.hooks = []
+
+  log('function: ', fiber)
   // 调用 Function Component 的 function 返回 node
   const children = [fiber.type(fiber.props)]
   reconcileChildren(fiber, children)
 }
 
+function useState(initial) {
+  // 前一次渲染的 hook
+  const oldHook = 
+    wipFiber.alternate &&
+    wipFiber.alternate.hooks &&
+    wipFiber.alternate.hooks[hookIndex]
+  const hook = {
+    state: oldHook ? oldHook.state : initial,
+    // return a function to update the state
+    queue: []
+  }
+
+  const actions = oldHook ? oldHook.queue : []
+  // run actions
+  actions.forEach(action => {
+    hook.state = action(hook.state)
+  })
+  const setState = action => {
+    // push that action to a queue we added to the hook
+    hook.queue.push(action)
+    wipRoot = {
+      node: currentRoot.node,
+      props: currentRoot.props,
+      alternate: currentRoot
+    }
+    // 更新数据后渲染
+    nextUnitOfWork = wipRoot
+    deletions = []
+  }
+  // wipFiber.hooks.push[hook]
+  wipFiber.hooks.push(hook)
+  hookIndex++
+  return [hook.state, setState]
+}
+
 function updateHostComponent(fiber) {
+  log('host: ', fiber)
   if(!fiber.node) {
     fiber.node = createNode(fiber)
   }
@@ -120,6 +169,7 @@ function reconcileChildren(wipFiber, children) {
 
   while (index < children.length || oldFiber != null) {
     const child = children[index]
+    console.log('child: ', child)
     let newFiber = null
     // const newFiber = {
     //   type: child.type,
@@ -166,14 +216,18 @@ function reconcileChildren(wipFiber, children) {
       deletions.push(oldFiber)
     }
 
+    if (oldFiber) {
+      oldFiber = oldFiber.sibling
+    }
+
     if(index === 0) {
       // 设置 child
       // fiber.child = newFiber
       wipFiber.child = newFiber
-    } else {
+    } else if (child) {
       // prevSibling 是前一个 child 
       // 设置 sibling
-      prevSibling.prevSibling = newFiber
+      prevSibling.sibling = newFiber
     }
     prevSibling = newFiber // 更新 prevSibling
     index++
@@ -185,6 +239,7 @@ requestIdleCallback(workLoop)
 /* render */
 
 function createNode(fiber) {
+  log(fiber)
   log(fiber.props)
 
 	const node = fiber.type === TEXT_ELEMENT
@@ -192,11 +247,11 @@ function createNode(fiber) {
 		// ? document.createTextNode(fiber.props.nodeValue)
 		: document.createElement(fiber.type)
 	
-	Object.keys(fiber.props)
-		.filter(key => key !== 'children')
-		.forEach(name => {
-			node[name] = fiber.props[name]
-		})
+	// Object.keys(fiber.props)
+	// 	.filter(key => key !== 'children')
+	// 	.forEach(name => {
+	// 		node[name] = fiber.props[name]
+	// 	})
 	
 	// render children
 
@@ -336,6 +391,7 @@ function render(element, container) {
 const Liteact = {
 	createElement,
 	render,
+  useState,
 }
 
 export default Liteact
