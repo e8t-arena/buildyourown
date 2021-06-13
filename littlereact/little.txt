@@ -137,8 +137,53 @@ fiber tree 为了方便找到 next unit of work
 
 追踪 root of fiber tree : work in progress root or wipRoot
 
-
 # step 6 Reconciliation
+
+处理 update delete node
+
+compare
+  the elements we receive on the render function
+  the last fiber tree we committed to the DOM
+
+currentRoot: 
+  save a reference -> the last fiber tree we committed to the DOM
+
+fiber: alternate property
+  a link to the old fiber
+
+wipRoot.alternate -> currentRoot(prevRoot)
+
+从 performUnitOfWork 中分离出 reconcileChildren(wipFiber, children)
+
+reconcileChildren(wipFiber, children)
+
+let oldFiber = wipFiber.alternate && wipFiber.alternate.child
+
+oldFiber 是上次渲染的 dom
+
+children 是准备渲染的 dom 
+
+update
+  keep the DOM node and just update it with the new props
+  (仅依靠 type 一样?)
+  node 属性保持不变，更新 props,
+  添加 effectTag 属性 effectTag: "UPDATE",
+
+add 
+  create a new DOM node
+
+delete
+  remove node
+
+[Note]: React 会使用 key 来判断数组中元素顺序变化
+
+updateNode
+  比对 properties
+  isNew
+  isGone
+  isProperty
+  特别处理 event key.startsWith('on')
+
 # step 7
 
 # step 8
