@@ -34,12 +34,20 @@ function createTextElement(text) {
 // https://developer.mozilla.org/en-US/docs/Web/API/Window/requestIdleCallback
 
 let nextUnitOfWork = null 
+let wipRoot = null 
 
 function workLoop(deadline) {
-  
-  nextUnitOfWork = performUnitOfWork(
-    nextUnitOfWork
-  )
+  let shouldYield = false 
+  while(nextUnitOfWork && !shouldYield) {
+    nextUnitOfWork = performUnitOfWork(
+      nextUnitOfWork
+    )
+    shouldYield = deadline.timeRemaining() < 1
+  }
+
+  if(!nextUnitOfWork && wipRoot) {
+    commitRoot()
+  }
 
   requestIdleCallback(workLoop)
 }
@@ -51,9 +59,9 @@ function performUnitOfWork(fiber) {
   if(!fiber.node) {
     fiber.node = createNode(fiber)
   }
-  if(fiber.parent) {
-    fiber.parent.node.appendChild(fiber.node)
-  }
+  // if(fiber.parent) {
+  //   fiber.parent.node.appendChild(fiber.node)
+  // }
 
   // create new fiber
   const children = fiber.props.children 
@@ -100,7 +108,6 @@ function performUnitOfWork(fiber) {
 
 /* render */
 
-
 function createNode(fiber) {
 	const node = element.type === TEXT_ELEMENT
 		? document.createTextNode(element.props.nodeValue)
@@ -122,15 +129,34 @@ function createNode(fiber) {
   return node
 }
 
+// 渲染 wipRoot 
+
+function commitRoot() {
+  commitWork(wipRoot.child)
+  wipRoot = null
+}
+
+// 递归添加 dom 
+
+function commitWork(fiber) {
+  if(!fiber) return 
+  const nodeParent = fiber.parent.node 
+  nodeParent.appendChild(fiber.node)
+  // fiber.parent.node.appendChild(fiber.node)
+  commitWork(fiber.child)
+  commitWork(fiber.sibling)
+}
+
+
 function render(element, container) {
-  nextUnitOfWork = {
+  wipRoot = {
     node: container,
     props: {
       children: [element]
     }
   }
+  nextUnitOfWork = wipRoot
 }
-
 /* library */
 
 const Liteact = {
