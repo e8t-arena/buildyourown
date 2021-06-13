@@ -76,6 +76,66 @@ assign the element props to the node
 
   element.props 其中过滤掉 children 部分
 
+# step 3 Concurrent Mode
+
+解决递归调用中的问题
+
+  当 dom 树很深时，递归调用会阻塞主线程，无法响应用户输入，动画等高优先级指令
+
+解决方案: 分单元执行递归，执行完固定单元后，让主线程优先处理其他指令
+
+yield
+
+window.requestIdleCallback 参数 deadline 可以用于查看在浏览器获得控制权前还有多长时间
+
+performUnitOfWork 执行当前 unitOfWork 返回下一个 unitOfWork
+
+# step 4 Fibers
+
+使用 fiber tree 来组织 units of work
+
+one fiber for each element 
+
+each fiber will be a unit of work
+
+例如 
+
+Didact.render(
+  <div>
+    <h1>
+      <p />
+      <a />
+    </h1>
+    <h2 />
+  </div>,
+  container
+)
+
+render 中需要
+
+  create the root fiber : div 
+  设置 root fiber 为 nextUnitOfWork : 在 performUnitOfWork 中会 render div
+  调用 performUnitOfWork
+    add the element to the DOM
+    为 children 创建 fiber
+    选取下一个 unitOfWork
+
+fiber tree 为了方便找到 next unit of work
+
+在 fiber 中记录 first child, its next sibling, its parent
+  child1 -> child2 -> its next sibling -> sibling.parent.sibling
+  顺序:
+    child
+    sibling
+    parent.sibling
+
+# step 5
+# step 4
+# step 4
+
+
+# setup
+
 https://www.snowpack.dev/tutorials/react
 
 npx create-snowpack-app litereact --template @snowpack/app-template-minimal
