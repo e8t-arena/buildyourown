@@ -1,0 +1,265 @@
+https://viewsourcecode.org/snaptoken/kilo/
+
+editor: simplec: 
+
+# 01
+
+cc --version 
+make -v
+
+cc kilo.c -o kilo
+
+using Makefile:
+
+kilo: kilo.c
+	$(CC) kilo.c -o kilo -Wall -Wextra -pedantic -std=c99
+-Wall stands for “all Warnings”
+-Wextra and -pedantic turn on even more warnings
+-std=c99 specifies the exact version of the C language standard we’re using, which is C99
+  c99: allows us to declare variables anywhere within a function
+
+# 02 : Entering raw mode
+
+unistd.h
+
+函数
+  read
+    
+常量
+  STDIN_FILENO
+
+read(STDIN_FILENO, &c, 1)
+
+终端默认在 canonical mode 工作，又叫 cooked mode
+
+这种模式下 user presses Enter 键后，才会向程序发送 keyboard input
+
+但对于 editor，需要能够及时处理每个用户输入，因此需要 raw mode
+
+用 Ctrl-D: 发送 end-of-file 或 Ctrl-C 退出
+
+尝试 canonical 模式，使用 q 退出
+  && c != 'q'
+输入包含 q 的字符串，kilo 会一直处理到遇到 q，退出程序，后续字符串发送给终端
+
+设置 teminal attributes
+  tcgetattr() 读取当前 attributes 到 struct termios
+  修改设置
+  tcsetattr() 设置 attributes
+
+使用 termios.h
+  termios, tcgetattr(), tcsetattr(), ECHO, and TCSAFLUSH
+
+ECHO feature
+  显示输入的每个字符，关闭以便自己 render user interface
+  效果类似终端输入密码
+
+对 ECHO 先进行 bitwise-NOT (~) 再 bitwise-AND (&)
+  forces the fourth bit in the flags field to become 0, and causes every other bit to retain its current value
+  ECHO is a bitflag
+
+TCSAFLUSH
+  waits for all pending output to be written to the terminal, and also discards any input that hasn’t been read.
+  即程序退出后的字符串不再发送给 terminal
+
+c_lflag 表示 local flags
+
+The other flag fields are c_iflag (input flags), c_oflag (output flags), and c_cflag (control flags), all of which we will have to modify to enable raw mode.
+
+终端中使用 reset 命令回复设置
+
+退出 kilo 时回复设置 保存一份原始配置
+
+stdlib.h 中的 atexit() 能够注册函数，在程序退出时自动执行
+  支持 return from main() 或调用 exit()
+
+刚关闭 echoing 现在关闭 canonical mode
+
+要使用到 ICANON flag (<termios.h>)
+
+一般以 I 开头的 flag 属于 c_iflag 但 ICANON 属于 c_lflag
+
+raw.c_lflag &= ~(ECHO | ICANON); Turn off ICANON
+
+显示键盘输入
+
+print each character’s numeric ASCII value, as well as the character it represents if it is a printable character.
+
+显示 numeric ASCII value 如果可以是 printable 同时显示 printable character
+
+ctype.h
+  
+  iscntrl() 测试字符是否为 control character
+  
+  ASCII codes 0–31 are all control characters, and 127 is also a control character.
+  
+  ASCII codes 32–126 are all printable.
+  
+  http://asciitable.com/
+
+这一步显示 keypresses 如何转为 bytes
+
+尝试输入 Escape / Page Down / Down / Enter Ctrl Ctrl-A
+
+keypress 可以分为几大类
+
+Arrow keys, Page Up, Page Down, Home, and End
+  3 or 4 bytes
+  escape sequence 开头，即 27, '['
+
+Backspace byte 127, Delete 4-byte escape sequence
+Enter byte 10 即 newline character '\n'
+Ctrl-A 到 Ctrl-z 
+  将字符 A-Z 对应到 1-26
+  但是有一些 signals 指令
+    Ctrl-S frozen pragram 使用 Ctrl-Q 恢复
+    Ctrl-Z 或 Ctrl-Y SIGTSTP signal，suspend 程序到后台，命令 fg 可以在 linux 上恢复，但在 macOS 上无法恢复 read()
+    Ctrl-C SIGINT signal，退出程序
+
+关闭 Ctrl-C Ctrl-Z
+
+ISIG comes from <termios.h>
+
+raw.c_lflag &= ~(ECHO | ICANON | ISIG);
+
+关闭 Ctrl-S Ctrl-Q
+  它们用于 software flow control
+  Ctrl-S stops data from being transmitted to the terminal until you press Ctrl-Q
+
+属于 c_iflag IXON
+
+raw.c_iflag &= ~(IXON);
+
+关闭 Ctrl-v
+
+部分系统中会使用 Ctrl-V 进行键位组合，等待按下其他键
+  例如，输入控制字符 Ctrl-C 可以通过 Ctrl-V Ctrl-C 完成
+
+需要 IEXTEN c_lflag
+
+同时也修复 macOS 上取消的 Ctrl-o
+
+修复 Ctrl-M
+  Ctrl-M 应该输出 13 但是缺输出 10
+  原因: 按下回车时 (13, '\r') 被转为 (10, '\n') 因此 Enter 对应 10。
+  但 Ctrl-M 也被转为 10 (13)
+
+ICRNL I -> c_iflag CR -> carriage return NL -> new line
+
+关闭输出处理
+  一般只有 "\n" to "\r\n" 这一步
+  \r 移动 cursor 到当前行首
+  \n 移动 cursor 到下一行
+OPOST c_oflag
+
+不过以后想换行，需要打印 \r\n 
+
+关闭杂项
+  一些在 modern terminal 中可能已经被关闭，但传统意义上启用 raw mode 要求关闭的项
+
+BRKINT
+  允许发送 Ctrl-C 到程序
+INPCK
+  enables parity checking
+ISTRIP
+  causes the 8th bit of each input byte to be stripped, meaning it will set it to 0. 一般已经关闭
+
+CS8 is not a flag, it is a bit mask with multiple bits, which we set using the bitwise-OR (|) operator unlike all the flags we are turning off. It sets the character size (CS) to 8 bits per byte.
+
+设置 read() timeout
+  可以实现在等待用户输入时 显示动画
+
+VMIN and VTIME 是 c_cc field 的索引
+
+VMIN 设置 read() 返回需要的最少输入 bytes
+  设为 0 即立即返回
+VTIME 设置 read() 等待的最长时间
+  设为 1/10 秒 100 毫秒
+
+read() 返回值是读到的 bytes 数
+
+增加错误处理 panic()
+  perror(s);
+  exit(1);
+
+perror() comes from <stdio.h>, and exit() comes from <stdlib.h>.
+
+大部分 c 标准库函数 fail 时会修改 global errno 变量
+
+In Cygwin, when read() times out it returns -1 with an errno of EAGAIN, instead of just returning 0 like it’s supposed to. To make it work in Cygwin, we won’t treat EAGAIN as an error.
+
+# Refs:
+
+Mask:   00001111b
+Value:  01010101b
+
+- call other make rules
+
+https://stackoverflow.com/questions/8646688/make-rule-call-rule
+
+- bitflag
+
+https://en.wikipedia.org/wiki/Bit_field
+
+- printf hexadecimal binary
+
+https://www.programmingsimplified.com/c/program/print-string
+
+https://www.cplusplus.com/reference/cstdio/printf/
+
+https://stackoverflow.com/questions/111928/is-there-a-printf-converter-to-print-in-binary-format?page=1&tab=votes#tab-top
+
+https://stackoverflow.com/questions/3649026/how-to-display-hexadecimal-numbers-in-c
+
+https://katyscode.wordpress.com/2012/05/12/printing-numbers-in-binary-format-in-c/
+
+base convert
+
+https://elixirforum.com/t/how-to-convert-decimal-value-to-binary-value/27749/2
+
+Integer.to_string(0x1234, 2)
+Integer.parse("1234", 16)
+String.to_integer("1234", 16)
+
+但这函数类型就不合适，期望的是 Int(0x) 到 Int(0b) 不是 Int 到 String
+
+https://stackoverflow.com/questions/33347909/convert-a-binary-string-to-hexadecimal-and-vice-versa-in-elixir
+
+elixir hexdump
+
+http://www.petecorey.com/blog/2018/04/09/hex-dumping-with-elixir/
+
+- HTTP CRLF
+\r\n
+https://stackoverflow.com/questions/5757290/http-header-line-break-style
+
+- bit Mask / numpy mask
+
+https://stackoverflow.com/questions/10493411/what-is-bit-masking
+
+https://en.cppreference.com/w/c/types/integer
+
+#include <stdint.h>
+
+Masking is implemented using AND
+
+uint8_t mask = 0x0f;   // 00001111b
+uint8_t value = 0x55;  // 01010101b
+return mask & value;
+
+https://www.python-course.eu/numpy_masking.php
+
+
+
+https://medium.com/udacity-google-india-scholars/build-your-own-reusable-app-shell-from-scratch-7823f65e1fbd
+
+page skeleton
+
+
+
+
+
+
+https://dzone.com/articles/how-to-build-a-progressive-web-app-pwa-with-javasc
+https://www.youtube.com/watch?v=Nduh3IUtyrE PWA series #2: App shell
+
