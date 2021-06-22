@@ -1,0 +1,3 @@
+runc() {
+  cc $1 -Wall -Wextra -pedantic -std=c99
+}

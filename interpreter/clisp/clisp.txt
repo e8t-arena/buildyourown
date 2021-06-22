@@ -1,0 +1,18 @@
+cc file.c -Wall -Wextra -pedantic -std=c99
+
+./compile
+
+runc file.c
+
+https://en.cppreference.com/w/c
+
+# Ch02 Installation 开发环境
+
+# Ch03 Basics
+
+http://www.buildyourownlisp.com/chapter3_basics
+
+# Ch04 An Interactive Prompt
+
+Read Evaluate Print Loop REPL
+
