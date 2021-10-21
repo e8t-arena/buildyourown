@@ -135,7 +135,7 @@ skip:
     mov esp, ebp
 
 ;		MOV		ESP,[EBX+12]	; 스택 초기치 0x82d9
-;		call	DWORD 2*8:HariMain
+;		call	DWORD 2*8:Main
 ;		jmp		DWORD 2*8:0x0000001b		
 		jmp		BOTPAK
 
