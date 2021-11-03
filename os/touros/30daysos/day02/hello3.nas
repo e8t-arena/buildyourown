@@ -60,3 +60,8 @@ msg:
   DB "Good Job"
   DB 0x0a 
   DB 0
+
+; RESB 0x1fe-$
+; 用于识别为操作系统
+RESB 0x1fe-($-$$)
+DB 0x55, 0xaa
