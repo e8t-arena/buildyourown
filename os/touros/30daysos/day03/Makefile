@@ -15,16 +15,18 @@ OBJ = ${C_SOURCES:.c=.o}
 
 CC = /usr/local/bin/i386-elf-gcc
 GDB = /usr/local/bin/i386-elf-gdb
-LD = /usr/local/bin/i386-elf-ld
+# LD = /usr/local/bin/i386-elf-ld
+LD = /usr/local/Cellar/i386-elf-binutils/2.37_1/bin/i386-elf-ld
 ASMC = /usr/local/bin/nasm
 
 CFLAGS = -g -m32 -nostdlib -nostdinc -fno-builtin -fno-stack-protector -nostartfiles -nodefaultlibs \
 		 -Wall -Wextra
 
-TINY_DISK=/dev/disk3
+DISK=disk2
+TINY_DISK=/dev/$(DISK)
 DISK_UTILS=/usr/bin/hdiutil
 
-os.bin: bootpack.o
+os.bin: asmfunc.o bootpack.o
 	${LD} -m elf_i386 -o $@ -Ttext 0x00280000 $^ --oformat binary
 
 asmhead.bin: asmhead.nas
@@ -47,12 +49,12 @@ os.img : ipl.img asmhead.bin os.bin
 	cat asmhead.bin os.bin > os.sys
 	# copy os.bin to os.img (macOS)
 	# TINY_DISK := $(hdiutil attach -blocksize 512 -noverify -nomount os.img)
-	$(DISK_UTILS) detach disk3; $(DISK_UTILS) attach -blocksize 512 -noverify -nomount ipl.img
+	$(DISK_UTILS) detach $(DISK); $(DISK_UTILS) attach -blocksize 512 -noverify -nomount ipl.img
 	# hdiutils 输出为
 	# mkdir -p /tmp/tinyos && mount -t msdos $(TINY_DISK) /tmp/tinyos && cp <(cat asmhead.bin os.sys) /tmp/tinyos/. && umount $(TINY_DISK)
 	mkdir -p /tmp/tinyos && mount -t msdos $(TINY_DISK) /tmp/tinyos && cp os.sys /tmp/tinyos/. && umount $(TINY_DISK)
 	dd if=$(TINY_DISK) of=os.img bs=512
-	$(DISK_UTILS) detach disk3
+	$(DISK_UTILS) detach $(DISK)
 
 .PHONY: build, img, runimg, run, clean
 
