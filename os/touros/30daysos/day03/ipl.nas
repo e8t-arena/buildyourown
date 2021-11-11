@@ -108,5 +108,6 @@ errormsg:
 ; 用于识别为操作系统
 ; RESB 0x1fe-$
 ; times 510 - ($-$$) db 0 ; 一种方法
+
 RESB 0x1fe-($-$$)
 DB 0x55, 0xaa
