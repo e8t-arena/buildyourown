@@ -7,7 +7,7 @@
 
 /* #include "bootpack.h" */
 
-// 找不到路径
+// 找不到路径 没有头文件
 // #include <stdio.h>
 
 #define COL8_000000 0
