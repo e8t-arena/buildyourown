@@ -19,10 +19,8 @@ GDB = /usr/local/bin/i386-elf-gdb
 LD = /usr/local/Cellar/i386-elf-binutils/2.37_1/bin/i386-elf-ld
 ASMC = /usr/local/bin/nasm
 
-CFLAGS_ = -g -m32 -nostdinc -fno-builtin -fno-stack-protector -nostartfiles -nodefaultlibs \
-				 -Wall -Wextra -nostdlib
-
-CFLAGS = -g -m32 -Wall -Wextra
+CFLAGS = -g -m32 -nostdlib -nostdinc -fno-builtin -fno-stack-protector -nostartfiles -nodefaultlibs \
+		 -Wall -Wextra
 
 DISK=disk2
 TINY_DISK=/dev/$(DISK)
