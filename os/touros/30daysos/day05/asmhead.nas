@@ -1,39 +1,43 @@
-; haribote-os boot asm
+; os boot asm
 ; TAB=4
 
 BOTPAK	EQU		0x00280000		; bootpack의 로드 장소
 DSKCAC	EQU		0x00100000		; 디스크 캐쉬 프로그램의 장소
 DSKCAC0	EQU		0x00008000		; 디스크 캐쉬 프로그램의 장소(리얼모드)
 
-; BOOT_INFO 관계
-CYLS	EQU		0x0ff0			; boot sector가 설정한다
-LEDS	EQU		0x0ff1
-VMODE	EQU		0x0ff2			; 색 가지수에 관한 정보.어떤 비트 칼라인가?
-SCRNX	EQU		0x0ff4			; 해상도의 X
-SCRNY	EQU		0x0ff6			; 해상도의 Y
-VRAM	EQU		0x0ff8			; 그래픽 버퍼의 개시 번지
+; BOOT INFO binfo
+; 保存在 0x0ff0 附近，这里的内存未被使用
+
+CYLS  EQU 0x0ff0               ; 启动区
+LEDS  EQU 0x0ff1               ;
+VMODE EQU 0x0ff2               ; 颜色模式 位数
+SCRNX EQU 0x0ff4               ; screen x 分辨率 X 值
+SCRNY EQU 0x0ff6               ; screen y 分辨率 Y 值
+VRAM  EQU 0x0ff8               ; 图像缓冲区起始地址
 
 [bits 16]
+
+; 程序被装载的位置
 
 ORG 0xc200
 
 ;[org 0x8200]
 
-; 화면 모드를 설정
+; 
 
-		MOV		AL, 0x13	; VGA 그래픽스, 320 x200x8bit 칼라
-		MOV		AH,0x00
+		MOV		AL, 0x13	; VGA 显卡 320 x 200 8 位彩色
+		MOV		AH, 0x00
 		INT		0x10
-		MOV		BYTE [VMODE], 8	; 화면 모드를 메모 한다(C언어가 참조한다)
-		MOV		WORD [SCRNX],320
-		MOV		WORD [SCRNY],200
-		MOV		DWORD [VRAM],0x000a0000
+		MOV		BYTE [VMODE], 8	; 画面模式
+		MOV		WORD [SCRNX], 320
+		MOV		WORD [SCRNY], 200
+		MOV		DWORD [VRAM], 0x000a0000
 
-; 키보드의 LED 상태를 BIOS가 알려준다
+; 用 BIOS 取得各种 LED 指示灯状态
 
-		MOV		AH,0x02
-		INT		0x16 		; keyboard BIOS
-		MOV		[LEDS],AL
+		MOV		AH, 0x02
+		INT		0x16 		     ; keyboard BIOS
+		MOV		[LEDS], AL
 
 ; PIC가 일절의 인터럽트를 받아들이지 않게 한다
 ;	AT호환기의 사양에서는 PIC의 초기화를 한다면,
@@ -130,6 +134,7 @@ pipelineflush: ;0x8252
 		ADD		ESI,EBX
 		MOV		EDI,[EBX+12]	; 전송처
 		CALL	memcpy
+
 skip:
     mov ebp, 0x90000 ; 6. update the stack right at the top of the free space
     mov esp, ebp
@@ -150,6 +155,7 @@ memcpy:
 ; memcpy는 주소 사이즈 prefix를 넣은 것을 잊지 않으면, string 명령에서도 쓸 수 있다
 
 		ALIGNB	16
+
 GDT0:
 		RESB	8			; null selector
 ;		DW		0xffff, 0x0000, 0x9200, 0x00cf	; read/write 가능 세그먼트(segment) 32bit
@@ -172,12 +178,16 @@ gdt_code:
     db 0x0       ; segment base, bits 24-31
 
 		DW		0
+
 GDTR0:
 		DW		8*3-1
 		DD		GDT0
 
 		ALIGNB	16
 
-; 载入地址 0xc200 不需要下边这行
-; times 512 - ($-$$) db 0 ; 0x7dfe까지를 0x00로 채우는 명령
+; fin:
+; 	  HLT
+; 		JMP fin
+
 bootpack:
+
