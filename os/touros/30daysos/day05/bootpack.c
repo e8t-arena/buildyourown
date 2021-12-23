@@ -7,9 +7,6 @@
 
 /* #include "bootpack.h" */
 
-// 找不到路径
-// #include <stdio.h>
-
 #define COL8_000000 0
 #define COL8_FF0000 1
 #define COL8_00FF00 2
@@ -51,44 +48,39 @@ void boxfill8(unsigned char *vram, int xsize, unsigned char c, int x0, int y0, i
 
 void draw_more(unsigned char *vram, int xsize, int (*ui)[UI_SIZE], int ui_size);
 
+void init_screen(unsigned char *vram, int xsize, int ysize);
+
+struct BootInfo {
+  char cyls, leds, vmode, reserve;
+  short scrnx, scrny;
+  unsigned char *vram;
+};
+
 void OSMain(void)
 {
-  // int i; 
-  unsigned char *p;
-  int xsize=320, ysize=200;
+  unsigned char *vram;
+  // int xsize, ysize;
+  struct BootInfo *binfo;
 
   // 设定调色板
   init_palette();
 
-  p = (unsigned char *) 0xa0000;
+  // 需要初始化指针变量
+  // 即 binfo = 0xfff0; // asmhead.nas 中 CYLS 启动区的位置
+  binfo = (struct BootInfo *) 0x0ff0;
 
-  draw_bars(p);
+  // 不能省略为 *binfo.scrnx 会被解释为 *(binfo.scrnx)
+  // xsize = (*binfo).scrnx;
+  // ysize = (*binfo).scrny;
+  vram = (*binfo).vram;
 
-  int ui[][5] = {
-    {COL8_008484,        0,        0, xsize-1, ysize-29},
-    {COL8_C6C6C6,        0, ysize-28, xsize-1, ysize-28},
-    {COL8_FFFFFF,        0, ysize-27, xsize-1, ysize-27},
-    {COL8_C6C6C6,        0, ysize-26, xsize-1, ysize-1},
-    {COL8_FFFFFF,        3, ysize-24,      59, ysize-24},
-    // {COL8_000000,        2, ysize-24,       2, ysize-4},
-    {COL8_FFFFFF,        2, ysize-24,       2, ysize-4},
-    {COL8_848484,        3, ysize-4,       59, ysize-4},
-    {COL8_848484,       59, ysize-23,      59, ysize-5},
-    {COL8_000000,        2, ysize-3,       59, ysize-3},
-    {COL8_000000,       60, ysize-24,      60, ysize-3},
-    {COL8_848484, xsize-47, ysize-24, xsize-4, ysize-24},
-    {COL8_848484, xsize-47, ysize-23, xsize-47,ysize-4},
-    {COL8_FFFFFF, xsize-47, ysize-3,  xsize-4, ysize-3},
-    {COL8_FFFFFF, xsize-3,  ysize-24, xsize-3, ysize-3}
-  };
+  // init_screen(vram, xsize, ysize);
 
-  int ui_size;
-  ui_size = (int) (sizeof(ui) / sizeof(ui[0]));
-  draw_more(p, xsize, ui, ui_size);
+  init_screen(binfo->vram, binfo->scrnx, binfo->scrny);
 
-  boxfill8(p, 320, COL8_FF0000, 20, 20, 120, 120);
-  boxfill8(p, 320, COL8_00FF00, 70, 50, 170, 150);
-  boxfill8(p, 320, COL8_0000FF, 120, 80, 220, 180);
+  boxfill8(vram, 320, COL8_FF0000, 20, 20, 120, 120);
+  boxfill8(vram, 320, COL8_00FF00, 70, 50, 170, 150);
+  boxfill8(vram, 320, COL8_0000FF, 120, 80, 220, 180);
 
   for (;;) {
     io_hlt();
@@ -139,6 +131,30 @@ void draw_more(unsigned char *vram, int xsize, int (*ui)[UI_SIZE], int ui_size) 
       // boxfill8(vram, xsize, (*ui)[i][0], 0, 0, xsize-1,ysize-29)
       // boxfill8(vram, xsize, (*ui)[i][0], (*ui)[i][1], (*ui)[i][2], (*ui)[i][3], (*ui)[i][4]);
       boxfill8(vram, xsize, ui[i][0], ui[i][1], ui[i][2], ui[i][3], ui[i][4]);
+}
+
+void init_screen(unsigned char *vram, int xsize, int ysize) {
+  int ui[][5] = {
+    {COL8_008484,        0,        0, xsize-1, ysize-29},
+    {COL8_C6C6C6,        0, ysize-28, xsize-1, ysize-28},
+    {COL8_FFFFFF,        0, ysize-27, xsize-1, ysize-27},
+    {COL8_C6C6C6,        0, ysize-26, xsize-1, ysize-1},
+    {COL8_FFFFFF,        3, ysize-24,      59, ysize-24},
+    // {COL8_000000,        2, ysize-24,       2, ysize-4},
+    {COL8_FFFFFF,        2, ysize-24,       2, ysize-4},
+    {COL8_848484,        3, ysize-4,       59, ysize-4},
+    {COL8_848484,       59, ysize-23,      59, ysize-5},
+    {COL8_000000,        2, ysize-3,       59, ysize-3},
+    {COL8_000000,       60, ysize-24,      60, ysize-3},
+    {COL8_848484, xsize-47, ysize-24, xsize-4, ysize-24},
+    {COL8_848484, xsize-47, ysize-23, xsize-47,ysize-4},
+    {COL8_FFFFFF, xsize-47, ysize-3,  xsize-4, ysize-3},
+    {COL8_FFFFFF, xsize-3,  ysize-24, xsize-3, ysize-3}
+  };
+
+  int ui_size;
+  ui_size = (int) (sizeof(ui) / sizeof(ui[0]));
+  draw_more(vram, xsize, ui, ui_size);
 }
 
 void init_palette(void) {
