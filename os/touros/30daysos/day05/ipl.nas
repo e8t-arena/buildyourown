@@ -61,6 +61,7 @@ retry:
 ; 逐个扇区读取，将磁盘加载到内存 0x8200 - 0xa3ff
 ; 扇区读到 C0-H1-S18
 ; 下一个将是 C1-H0-S1
+
 next:
   MOV AX, ES      ; 内存地址后移 0x200
   ADD AX, 0x0020  
@@ -109,5 +110,6 @@ errormsg:
 ; 用于识别为操作系统
 ; RESB 0x1fe-$
 ; times 510 - ($-$$) db 0 ; 一种方法
+
 RESB 0x1fe-($-$$)
 DB 0x55, 0xaa
