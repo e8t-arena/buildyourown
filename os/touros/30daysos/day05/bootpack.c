@@ -8,11 +8,13 @@
 /* #include "bootpack.h" */
 
 #define COL8_000000 0
+#define BLACK 0
 #define COL8_FF0000 1
 #define COL8_00FF00 2
 #define COL8_FFFF00 3
 #define COL8_0000FF 4
 #define COL8_FF00FF 5
+#define PURPLE 5
 #define COL8_00FFFF 6
 #define COL8_FFFFFF 7
 #define COL8_C6C6C6 8
@@ -29,7 +31,6 @@
 // 引入汇编函数
 
 void io_hlt(void);  // 函数声明
-
 void io_cli(void);
 void io_out8(int port, int data);
 int io_load_eflags(void);
@@ -49,6 +50,10 @@ void boxfill8(unsigned char *vram, int xsize, unsigned char c, int x0, int y0, i
 void draw_more(unsigned char *vram, int xsize, int (*ui)[UI_SIZE], int ui_size);
 
 void init_screen(unsigned char *vram, int xsize, int ysize);
+
+void putfont8(unsigned char *vram, int xsize, int x, int y, char color, unsigned char *font);
+
+void putfonts8_asc(unsigned char *vram, int xsize, int x, int y, char color, char *s);
 
 struct BootInfo {
   char cyls, leds, vmode, reserve;
@@ -77,6 +82,17 @@ void OSMain(void)
   // init_screen(vram, xsize, ysize);
 
   init_screen(binfo->vram, binfo->scrnx, binfo->scrny);
+
+  // display font A
+  static unsigned char font_A[16] = {
+    0x00, 0x18, 0x18, 0x18, 0x18, 0x24, 0x24, 0x24,
+    0x24, 0x7e, 0x42, 0x42, 0x42, 0xe7, 0x00, 0x00
+  };
+  putfont8(vram, binfo->scrnx, 0, 0, BLACK, font_A);
+
+  // char data[] = "Hello TinyOS";
+  putfonts8_asc(binfo->vram, binfo->scrnx, 8,  8, BLACK, "Hello TinyOS");
+  putfonts8_asc(binfo->vram, binfo->scrnx, 0, 24, PURPLE, "Convert String to ASCII Value in Python");
 
   boxfill8(vram, 320, COL8_FF0000, 20, 20, 120, 120);
   boxfill8(vram, 320, COL8_00FF00, 70, 50, 170, 150);
@@ -193,5 +209,46 @@ void set_palette(int start, int end, unsigned char *rgb) {
     rgb += 3;
   }
   io_store_eflags(eflags);   // 恢复中断值
+  return;
+}
+
+// int x, int y 位置坐标
+// char c 是 color
+
+void putfont8(unsigned char *vram, int xsize, int x, int y, char c, unsigned char *font) {
+  int i;
+  unsigned char *p, data;
+  // 逐行显示
+  for (i = 0; i < 16; i++) {
+    data = font[i];
+
+    // 0x80 : 0b 1000 0000
+    // if( (d & 0x80) != 0 ) { vram[(y+i) * xsize + x + 0] = c; }
+
+    p = vram + (y + i) * xsize + x;
+    if( (data & 0x80) != 0 ) { p[0] = c;}
+    if( (data & 0x40) != 0 ) { p[1] = c;}
+    if( (data & 0x20) != 0 ) { p[2] = c;}
+    if( (data & 0x10) != 0 ) { p[3] = c;}
+    if( (data & 0x08) != 0 ) { p[4] = c;}
+    if( (data & 0x04) != 0 ) { p[5] = c;}
+    if( (data & 0x02) != 0 ) { p[6] = c;}
+    if( (data & 0x01) != 0 ) { p[7] = c;}
+  }
+}
+
+// unsigned char *s : 表示 text 字符串
+
+void putfonts8_asc(unsigned char *vram, int xsize, int x, int y, char c, char *s) {
+  unsigned char *data;
+  data = (unsigned char *)s;
+  extern unsigned char hankaku[4096];
+  // 指针增加
+  // 字符串末尾是 0x00
+  for (; *data != 0x00; data++) {
+    putfont8(vram, xsize, x, y, c, hankaku + *data * 16);
+    // 横向排列
+    x += 8;
+  }
   return;
 }
