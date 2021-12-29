@@ -15,6 +15,7 @@ OBJ = ${C_SOURCES:.c=.o}
 
 CC = /usr/local/bin/i386-elf-gcc
 GDB = /usr/local/bin/i386-elf-gdb
+BIN2OBJ = /usr/local/Cellar/i386-elf-binutils/2.37_1/bin/i386-elf-objcopy
 # LD = /usr/local/bin/i386-elf-ld
 LD = /usr/local/Cellar/i386-elf-binutils/2.37_1/bin/i386-elf-ld
 ASMC = /usr/local/bin/nasm
@@ -26,7 +27,19 @@ DISK=disk2
 TINY_DISK=/dev/$(DISK)
 DISK_UTILS=/usr/bin/hdiutil
 
-os.bin: asmfunc.o bootpack.o
+# compile fonts
+
+# hankaku.bin: hankaku.txt
+# 	${MAKEFONT} $< $@
+
+hankaku_need_to_redefine_symbol_name.o: ../fonts/hankaku.bin
+	${BIN2OBJ} -I binary $< -O elf32-i386 $@ -B i386
+
+hankaku.o: hankaku_need_to_redefine_symbol_name.o
+	${BIN2OBJ} -I elf32-i386 $< -O elf32-i386 $@ --redefine-sym _binary____fonts_hankaku_bin_start=hankaku
+
+os.bin: asmfunc.o hankaku.o bootpack.o
+	# ${LD} -o $@ -Ttext 0x00280000 $^ --oformat binary
 	${LD} -m elf_i386 -o $@ -Ttext 0x00280000 $^ --oformat binary
 
 asmhead.bin: asmhead.nas
