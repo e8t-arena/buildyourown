@@ -546,7 +546,31 @@ puts(op1);
 
 fputs() writes to a file line by line
 
-05_day/harib02a_f 
+05_day/harib02a_f 4793394
+
+7. 显示变量 debug 
+
+tinyos 中无法使用 print 但可以用 sprint
+sprint 不按照格式出处 只将输出作为字符串写入内存
+
+https://github.com/sapsaldog/haribote_for_unix_like_os/tree/master/tools 
+
+cp -r tools/golibc <ROOT>/includes/golibc
+
+cd includes/golibc
+make
+
+https://transang.me/library-path-in-gcc/
+
+use CPATH (c or c++), C_INCLUDE_PATH (c only), CPLUS_INCLUDE_PATH (c++ only)
+
+use -I<dir_path> to gcc when compiling
+
+${LD} -m elf_i386 -o $@ -Ttext 0x00280000 $^ --oformat binary -L${INC_DIR} ${LIB_OPT
+  -L library_path -llibrary_name
+
+05_day/harib02a_h 4793394
+
 
 # Day5
 # Day5
@@ -582,6 +606,8 @@ https://wiki.osdev.org/BIOS
 https://9p.io/plan9/ Plan9 OS
 
 https://github.com/sapsaldog/haribote_for_unix_like_os
+
+HQ/store_tmp/haribote_for_unix_like_os
 
 https://github.com/sapsaldog/haribote_for_unix_like_os/tree/master/tools 工具
 
