@@ -1,3 +1,22 @@
+Hidemi Kawai
+
+
+
+指令:
+
+- Day1 
+
+db: data byte 写入 1 byte 
+resb: reserve byte 
+  RESB 10 空出 10 bytes 
+  RESB 0x1fe-$ 0x1fe 位置减去前边占用的字节数 $
+    0x1fe 即 510 字节必须是 55aa 才能被识别为 os 
+
+; 注释
+
+dw: data word 一个字 16 bit / 2 bytes
+dd: data double-word 32 bit / 4 bytes 
+
 Day1 汇编入门
 
 helloos.img 十六进制
@@ -18,16 +37,574 @@ dd if=bootloader of=littleos.img count=1 bs=512
 dd if=/dev/zero of=littleos.img bs=512 seek=1 skip=1 count=2879
 qemu-system-i386 -drive format=raw,file=littleos.img
 
+boot sector 启动区
+  计算机读写软盘按照 512 字节为一个单位读取，称为一个扇区。
+  单个软盘空间 1440kb 即 2880 个扇区，检查第一个扇区最后两个字节是否为 0x55 0xaa
+
+IPL initial program loader 启动程序加载器
+  操作系统将加载自己的程序放在启动区
+
 refs:
   https://stackoverflow.com/questions/21300929/how-many-characters-can-you-store-with-1-byte
   https://os.phil-opp.com/edition-1/
   https://os.phil-opp.com/
   https://stackoverflow.com/questions/64740190/loading-and-running-a-raw-binary-file-with-32-bit-code-in-qemu
 
-Day2
+# Day2 汇编和 Makefile 
+
+MOV AX, 0 相当于 AX=0; 但 AX 中还有原来的值
+
+CPU 有多种寄存器
+  (排列不按照字母顺序)
+  AX accumulator 累加寄存器
+  CX counter 计数寄存器
+  DX data 数据寄存器
+  BX base 基址寄存器
+
+  SP stack pointer 栈指针寄存器
+  BP base pointer 基指针寄存器
+  SI source index 
+  DI destination index 
+
+ADD CX, 0x1234 等同于 ADD AX, 0x1234
+
+16bit 寄存器分为 高位 低位
+  low  AL 
+  high AH
+
+段寄存器 segment register 
+  ES 附加段
+  CS 代码段
+  SS 栈段
+  DS 数据段
+  FS 
+  GS 
+
+JMP entry 中 entry 的地址是根据 ORG 指令计算出来的
+
+写成 JMP 0x7050 也一样
+
+MOV AX, entry 是在 AX 中记录 0x7050 这一个数字
+
+MOV AL, [SI] [] 表示内存
+
+MOV 的数据源和目标位置可以是寄存器，常数或内存地址
+
+MOV BYTE [678], 123 表示在内存 678 位置保存表示 123 的 8 bit
+
+MOV WORD [678], 123 表示在内存 678 位置保存表示 123 的 16 bit
+
+数据大小为 WORD 会使用相邻字节空间（地址增加方向相邻）
+
+寄存器指定内存地址，只有 BX BP SI DI 可以，只有它们有处理这种指令的电路
+
+MOV BX, DX 
+MOV AL, BYTE [BX]
+
+MOV 中源数据和目标数据必须位数相同 可以省略 BYTE 
+
+MOV AL, [SI]
+
+ADD SI, 1 就是 SI=SI+1
+
+CMP 比较指令 
+
+CMP AL, 0
+
+JE 相等跳转指令。当前一个比较指令相等时，跳转到标签指向位置
+
+CMP AL, 0
+JE fin 
+
+就是 
+
+if (AL == 0) { goto fin; }
+
+INT 中断指令。用系统调用完成操作
+
+INT 0x10 即第 16 号函数，控制显卡显示内容
+
+HLT 停止 CPU 动作，处于睡眠状态
+
+ORG 0x7c00 含义
+  内存中很多位置是无法使用的。比如 0 号地址，BIOS 用来实现各种功能。 0xf0000 是 BIOS 程序。
+
+  0x00007c00 - 0x00007dff 是启动区内容装载地址
+
+# Day3 进入 32 位模式，导入 C 语言
+
+启动区位于第一个 512 字节里。下边完成第二个 512 字节
+
+JC: jump if carry 查看进位标志 carry flag，如果是 1 就跳转到后边标签位置
+
+INT 0x13 调用 BIOS 0x13 号函数 (19 号)
+
+https://wiki.osdev.org/ATA_in_x86_RealMode_(BIOS)
+
+返回值为 
+
+  FLACS.CF 进位标志，表示调用是否正常
+
+介绍古老的软盘
+  中间 8 厘米黑色圆盘，磁性胶片。
+  从外向内，一圈圈环状区域称为柱面 0 到 79 cylinder 柱面
+  磁头。针状磁性设备，可以正面接触磁盘，也可以背面接触磁盘。软盘磁盘两面都可以记录数据。因此有磁头 0 号 1 号
+  软盘分 18 个扇区 1 到 18
+  80 * 2 * 18 * 512 bytes = 1440 k bytes 1440kB 
+
+CH 柱面号
+CL 扇区号
+DH 磁头号
+DL 驱动器号
+  现在一般只有一个，指定为 0 
+
+IPL 位于
+CH 0 
+CL 1
+DH 0
+DL 0 
+
+我们接下来要加载
+CH 0 
+CL 2
+DH 0
+DL 0 
+
+缓冲区地址
+
+为了用寄存器表示更大地址，需要 EBX (32位机器，最大支持 4G 内存) 或 辅助寄存器 (段寄存器 16位机器)
+
+段寄存器示例 
+
+MOV AL, [ES:BX] 
+
+  [ES:BX] = ES x 16 + BX 得出实际地址
+
+  ES = 0xffff BX = 0xffff 时 最大可以表示 65535*16+65535 = 1114095 字节
+
+实际指定 ES=0x8200 BX=0 因为 0x8000 到 0x81ff 预留给启动区
+
+指定内存位置时都要指定段寄存器，默认是 DS: 
+
+即 MOV CX, [1234] 实际是 MOV CX, [DS:1234]
+
+正因为如此，需要预设 DS 为 0，否则会造成混乱
+
+JNC: jump if not carry 
+
+JAE: jump if above or equal
+
+JBE: jump if below or equal 
+
+JB: jump if below 
+
+macOS 下保存文件到磁盘映像 disk image 
+
+不需要额外应用
+
+make img 正常根据 ipl.nas 生成 os.img 
+
+直接双击 os.img 会自动挂载在 finder 中，复制 haribote.sys 到 os.img 内即可
+
+使用 vim 作为 二进制编辑器时，注意避免加载插件，尽量用 vim -u NONE os.img 
+
+:%!xdd
+
+会看到
+
+haribote.sys 出现在 0x002600 之后
+
+haribote.sys 内容在 0x004200 之后
+
+从启动区执行操作系统 fin 
+
+计算磁盘内容装载到内存的位置
+
+  0x8000 + 0x4200 = 0xc200
+
+hdiutil attach -blocksize 4096 -noverify -nomount os.img
+diskutil umount /dev/disk3
+dd if=os.img of=/dev/disk3
+diskutil mount /dev/disk3
+cp os.bin /Volumes/TINYOS/
+diskutil umount /dev/disk3
+dd if=/dev/disk3 of=os.img bs=512
+
+dd if=/dev/disk2 of=foo.bar.img.dd bs=64k
+
+保存 os.bin 到 os.img 中 
 
 
-https://www.pornhub.com/view_video.php?viewkey=ph5eb5113226198
-https://www.pornhub.com/view_video.php?viewkey=ph5f59f35e5ca7a
-https://www.pornhub.com/view_video.php?viewkey=ph5ebe98b9c4d53
-https://www.pornhub.com/view_video.php?viewkey=ph605b3e2b64043
+(diskutil umount /dev/disk3)
+diskutil unmountDisk /dev/disk3
+hdiutil detach disk3
+
+diskutil list
+hdiutil attach -blocksize 512 -noverify -nomount ipl.img
+[[ -d "/tmp/tinyos" ]] || mkdir -p /tmp/tinyos
+mount -t msdos /dev/disk3 /tmp/tinyos
+cp os.bin /tmp/tinyos/.
+umount /dev/disk3
+dd if=/dev/disk3 of=os.img bs=512
+hdiutil detach disk3
+
+os.bin 位于 00004200
+
+https://qemu.weilnetz.de/w32/2012/2012-12-04/qemu-doc.html#disk_005fimages
+
+汇编自上而下执行
+  fin:
+    HLT 
+    JMP fin 
+
+  实现无限循环，阻止后续代码执行，因此之后部分可以存放数据
+
+所有问题都出在 RESB 指令
+  https://stackoverflow.com/questions/14785964/invalid-operand-type-error
+
+保存 os.bin 到 os.img 
+  cat ipl.bin os.bin > os.bin 
+
+  https://en.wikiversity.org/wiki/MacOS/hdiutil
+  https://ss64.com/osx/hdiutil.html
+
+  https://www.cyberciti.biz/faq/how-to-create-disk-image-on-mac-os-x-with-dd-command/
+  https://osxdaily.com/2011/12/17/mount-a-dmg-from-the-command-line-in-mac-os-x/
+
+  https://apple.stackexchange.com/questions/129921/how-to-mount-raw-disk-images
+  https://apple.stackexchange.com/questions/260374/mount-fat32-partition-external-drive-on-mac
+  https://unix.stackexchange.com/questions/298685/can-a-mac-mount-a-debian-install-cd
+  https://stackoverflow.com/questions/4046019/error-when-detaching-volume-using-hdiutil-on-os-x
+
+  https://askubuntu.com/questions/159039/why-is-the-error-dd-dev-rdisk1bs-1m-operation-not-supported-popping-up-whil
+  https://www.cyberciti.biz/faq/how-to-create-disk-image-on-mac-os-x-with-dd-command/
+
+  https://github.com/search?p=2&q=edimg.exe&type=Code
+
+  https://www.ghacks.net/2007/10/23/bin-cue-img-and-iso-files-explained/
+
+  https://linuxconfig.org/how-dd-command-works-in-linux-with-examples
+  https://linuxhint.com/linux_dd_command/
+  https://www.cyberciti.biz/faq/unix-linux-dd-create-make-disk-image-commands
+
+Makefile UNIX 下样例
+  https://github.com/sapsaldog/haribote_for_unix_like_os/blob/master/03_day/harib00g/Makefile
+
+  # $@ = target file
+  # $< = first dependency
+  # $^ = all dependencies
+
+  # First rule is the one executed when no parameters are fed to the Makefile
+  all: run
+
+  # Notice how dependencies are built as needed
+  os-image.bin : ipl10.bin haribote.bin
+    cat $^ > os-image.bin
+
+32 位模式前期准备
+
+  32 位模式指 CPU 模式。有 16 位 和  32 位。16 位模式下可以方便使用 ax cx 等 16 位寄存器。
+
+  两个模式机器语言命令代码不同，互相不能运行。
+
+  32 位模式可以使用内存容量远大于 1MB。CPU 有自我保护功能。
+
+  32 位模式不能调用 BIOS 函数 , BIOS 使用 16 位机器语言
+
+导入 C 语言
+
+  重命名 os.nas 
+
+  添加 100 多行调用 C 语言程序的代码
+
+  汇编 C 语言互调
+    https://www.devdungeon.com/content/how-mix-c-and-assembly
+
+  os.nas 拆分出 asmhead.nas 
+
+  bootpack.c 需要编译为机器语言
+
+  CFLAGS = -g -m32 -nostdlib -nostdinc -fno-builtin -fno-stack-protector -nostartfiles -nodefaultlibs \
+		 -Wall -Wextra
+
+  ${CC} ${CFLAGS} -ffreestanding -c $< -o $@
+  
+  i386-elf-ld -o $@ -Ttext 0x00280000 $^ --oformat binary
+
+  https://wiki.osdev.org/GCC_Cross-Compiler#Why_cross-compilers_are_necessary
+
+  https://stackoverflow.com/questions/19200333/architecture-of-i386-input-file-is-incompatible-with-i386x86-64
+
+  brew install i386-elf-gcc i386-elf-binutils
+
+  https://github.com/nativeos/homebrew-i386-elf-toolchain
+
+  https://github.com/maojie/pintos_mac/pull/2
+
+  /usr/local/Cellar/i386-elf-gdb/10.1
+
+10. C 中使用汇编函数
+
+[SECTION .text]
+
+HLT 属于 I、O 指令
+MOV 传送指令
+ADD 演算指令
+
+汇编函数需要和 bootpack.obj 链接，首先编译为目标文件 输出格式设为 WCOFF 模式
+[FORMAT "WCOFF]
+[BITS 32] 设置为 32 位机器语言模式
+
+函数名加 下划线 _
+
+需要链接的函数名要用 GLOBAL 指令声明
+
+RET: return
+
+# Day4 C 语言 和 画面显示练习
+
+特定位变为 1 使用 OR 或运算 | 
+
+0100 OR 0010 -> 0110
+
+特定位变为 0 使用 AND 与运算 &
+
+0100 AND 1101 -> 0100
+
+反转 XOR 异或运算 对应位相同，结果为 0 不同结果为 1
+
+0100 XOR 0010 -> 0110
+
+asmhead.nas 即 day03 中 without_c 里 os.nas
+
+write_mem8 是在 C 中调用 asmfunc.nas 里的汇编函数
+
+想在 C 中完成 
+  MOV BYTE [i], (i & 0x0f)
+  // MOV BYTE [678], 123 表示在内存 678 位置保存表示 123 的 8 bit
+  // MOV BYTE[678], 123 表示在内存 678 位置保存表示 123 的 8 bit
+
+需要用
+
+int i;
+char *p;
+
+p = (char *) i;
+*p = i & 0x0f;
+
+上边两个分别是
+
+MOV ECX, i 给 ECX 寄存器赋值 在 CPU 里
+MOV BYTE [ECX], (i & 0x0f) 给 ECX 号内存地址赋值 在内存里
+
+如果先 MOV BYTE [ECX], (i & 0x0f) 会将结果写入不可知内存位置
+
+只有 p 是变量，存储内存地址，*p 不是变量
+char *p; 声明的是 p
+C 中 char* p,q; 被认为 char *p, q; 一个地址 一个字符
+如果要声明两个地址 char *p, *q;
+
+6. 色号设定
+
+使用 320x200 8 位颜色模式
+色号为 8 位二进制数 0 - 255
+
+一般是 6 位 十六进制数 即 24 位二进制数表示颜色
+
+8 位彩色模式下随意指定 0-255 表示的颜色
+不设定时 0 号颜色是 #000000 15 号是 #ffffff
+这种方式叫 palette 调色板
+
+cpu 向设备发送电信号是 OUT 指令
+从设备获取信号是 IN 指令
+
+用设备号码区分设备，设备号码被称为 port 
+
+0x03c8 0x03c9 都是设备号码
+屏蔽中断 CLI 将中断标识 interrupt flag 置为 0 的指令 clear interrupt flag CL I
+调色板号码写入 0x03c8
+RGB 依次写入 0x03c9
+读取当前调色板状态
+  调色板号码写入 0x03c7
+  从 0x03c9 读取数据
+恢复中断 STI 
+  将中断标识 interrupt flag 置为 1 的指令 set interrupt flag ST I
+
+EFLAGS 是特殊的寄存器，从 FLAGS 寄存器扩展来
+FLAGS 存储 进位标识 中断标识 等
+EFLAGS 没有 JI JNI 的指令，需要先读入 EFLAGS 检查第 9 位是 0 或 1
+进位标识是第 0 位
+
+只有 PUSHFD POPFD 可以读切 EFLAGS
+PUSHFD push flags double-word 按双字长将标识位的值写入栈
+
+PUSHFD POP EAX 先将 EFLAGS 压入栈再将弹出值写入 EAX
+即 MOV EAX, EFLAGS
+
+PUSH EAX POPFD = MOV EFLAGS, EAX
+
+io_load_eflags
+  有返回值的汇编函数
+  C 语言约定，执行 RET 后，EAX 中值是返回值
+
+7. 绘制矩形
+320x200 8 位颜色模式 共 64000 像素
+左上点坐标 (0, 0)
+右下点 (319, 319)
+
+坐标 (x,y) 对应 VRAM 显存地址 
+
+0xa0000 + x + y * 320
+
+得到地址后，存入颜色号码就得到一个点
+递增 x 值获得水平直线
+向下循环绘制直线得到有填充色的矩形
+
+boxfill8
+
+8. 绘制简易界面
+
+int x[3][2] = {{},{},{}};
+int x[3][2] = {0,1, 2,3, 4,5};
+
+# Day5 结构体 显示文字 初始化 GDT/IDT
+
+1. 分离启动信息
+
+asmhead 中预先定义设置参数值
+
+; BOOT INFO
+; 保存在 0x0ff0 附近，这里的内存未被使用
+CYLS  EQU 0x0ff0               ; 启动区
+LEDS  EQU 0x0ff1               ;
+VMODE EQU 0x0ff2               ; 颜色模式 位数
+SCRNX EQU 0x0ff4               ; screen x 分辨率 X 值
+SCRNY EQU 0x0ff6               ; screen y 分辨率 Y 值
+VRAM  EQU 0x0ff8               ; 图像缓冲区起始地址
+
+EQU 伪指令把一个符号名称与一个整数表达式或一个任意文本关联，有 3 种格式
+
+name EQU expression
+name EQU symbol
+name EQU <text>
+
+symbol 表示其他用 EQU 关联的符号
+
+binfo : bootinfo
+scrn  : screen
+
+地址用 4 字节表示，binfo 是 4 字节变量
+指针变量使用前需要赋值
+
+启动区 IPL Initial Program Loader
+
+IPL -> asmhead -> (asmfunc, bootpack)
+
+05_day/harib02a_c ceabad2
+
+显示字符: 32 位模式下无法使用 BIOS 显示字符需要自己写代码显示
+
+字符用 8 x 16 的长方形像素点阵表示
+描述文字形状的数据即 字体数据 font 
+用 16 进制表示 0 1 排列
+遍历显示
+
+载入字体文件后，会形成类似
+
+_hankanku:
+  DB ... 写入的数据 等同于 C 中 static 声明部分
+
+C 里使用 extern char hankaku[4096];
+extern 使用源程序外的数据
+字体 A 数据位于 hankaku + 0x41 * 16
+C 语言 'A' 可以表示 A 的字符编码即 0x41 
+hankaku + 'A' * 16
+
+Python:
+获取字符 ascii 码值: ord('h')
+ord('a')
+97
+
+https://www.jianshu.com/p/51a42fedc1cc
+
+brew install binutils 安装 greadelf
+
+/usr/local/Cellar/i386-elf-binutils/2.37_1/bin/i386-elf-objcopy -I binary ../fonts/hankaku.bin -O elf32-i386 hankaku_need_to_redefine_symbol_name.o -B i386
+
+/usr/local/Cellar/i386-elf-binutils/2.37_1/bin/i386-elf-objcopy -I elf32-i386 hankaku_need_to_redefine_symbol_name.o -O elf32-i386 hankaku.o --redefine-sym _binary____fonts_hankaku_bin_start=hankaku
+
+/usr/local/Cellar/i386-elf-binutils/2.37_1/bin/i386-elf-objcopy -I binary hankaku.bin -O elf32-i386 hankaku_need_to_redefine_symbol_name.o -B i386
+
+greadelf -aW hankaku_need_to_redefine_symbol_name.o
+
+-W wide 允许完整显示超过 80 字符内容
+
+https://www.educba.com/c-puts-function/
+
+strcpy(op1, "this is first line of puts example");
+puts(op1);
+
+fputs() writes to a file line by line
+
+05_day/harib02a_f 
+
+# Day5
+# Day5
+# Day5
+
+03_day/harib00g 1b5ea53
+03_day/harib00h 630ac58
+03_day/harib00i 1eea920
+03_day/harib00j 9286b6a
+
+04_day/harib01a b1614d1
+04_day/harib01c 9286b6a
+04_day/harib01e c1cff7a
+04_day/harib01f 3f7603c
+04_day/harib01g fbb773a
+04_day/harib01h bab68e5
+
+0x10 -> 8bit -> 0b 0001 0000
+高 8 bit: 0001
+低 8 bit: 0000
+
+0x13-> 8bit -> 0b 0001 0011
+高 8 bit: 0001
+低 8 bit: 0011
+
+汇编指令参考
+http://c.biancheng.net/view/3481.html
+https://www.keil.com/support/man/docs/armasm/armasm_dom1361290008953.htm
+
+BIOS 系统调用
+https://wiki.osdev.org/BIOS
+
+https://9p.io/plan9/ Plan9 OS
+
+https://github.com/sapsaldog/haribote_for_unix_like_os
+
+https://github.com/sapsaldog/haribote_for_unix_like_os/tree/master/tools 工具
+
+https://github.com/yourtion/30dayMakeOS
+
+https://github.com/Tassandar/OSASK
+
+https://gitee.com/paud/30daysOS
+
+https://zhuanlan.zhihu.com/p/104096261
+
+https://zhuanlan.zhihu.com/p/260987861
+
+http://homepages.rpi.edu/~wangy52/PersonalWebsite/build/html/Misc/MyOS/MyOS.html
+
+https://cloud.tencent.com/developer/article/1470861 编写PC操作系统的参考资料
+
+Makefile
+  https://www.gnu.org/software/make/manual/html_node/Phony-Targets.html
+
+
+https://github.com/billhhh/The-C-Book
+https://github.com/HongYiMU/TheAlgorithm
+
+
+
