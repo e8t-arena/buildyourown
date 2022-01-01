@@ -23,9 +23,16 @@ ASMC = /usr/local/bin/nasm
 CFLAGS = -g -m32 -nostdlib -nostdinc -fno-builtin -fno-stack-protector -nostartfiles -nodefaultlibs \
 		 -Wall -Wextra
 
+INC_DIR = ../includes/golibc
+LIB_OPT = -Lgolibc
+
 DISK=disk2
 TINY_DISK=/dev/$(DISK)
 DISK_UTILS=/usr/bin/hdiutil
+
+C_SOURCES = $(wildcard *.c)
+OBJ = ${C_SOURCES:.c=.o}
+OBJ += asmfunc.o hankaku.o
 
 # compile fonts
 
@@ -38,9 +45,9 @@ hankaku_need_to_redefine_symbol_name.o: ../fonts/hankaku.bin
 hankaku.o: hankaku_need_to_redefine_symbol_name.o
 	${BIN2OBJ} -I elf32-i386 $< -O elf32-i386 $@ --redefine-sym _binary____fonts_hankaku_bin_start=hankaku
 
-os.bin: asmfunc.o hankaku.o bootpack.o
+os.bin: ${OBJ}
 	# ${LD} -o $@ -Ttext 0x00280000 $^ --oformat binary
-	${LD} -m elf_i386 -o $@ -Ttext 0x00280000 $^ --oformat binary
+	${LD} -m elf_i386 -o $@ -Ttext 0x00280000 $^ --oformat binary -L${INC_DIR} ${LIB_OPT}
 
 asmhead.bin: asmhead.nas
 	${ASMC} $< -f bin -o $@
@@ -49,7 +56,7 @@ ipl.bin: ipl.nas
 	${ASMC} $< -f bin -o $@
 
 %.o: %.c ${HEADERS}
-	${CC} ${CFLAGS} -ffreestanding -c $< -o $@
+	${CC} ${CFLAGS} -I${INC_DIR} -ffreestanding -c $< -o $@
 
 %.o: %.nas
 	${ASMC} $< -f elf -o $@
