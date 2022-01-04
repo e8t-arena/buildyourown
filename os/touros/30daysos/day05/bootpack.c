@@ -5,6 +5,7 @@
  * Distributed under terms of the MIT license.
  */
 
+#include <stdio.h>
 /* #include "bootpack.h" */
 
 #define COL8_000000 0
@@ -27,6 +28,12 @@
 #define COL8_848484 15
 
 #define UI_SIZE 5
+
+typedef struct {
+  char cyls, leds, vmode, reserve;
+  short scrnx, scrny;
+  unsigned char *vram;
+} BootInfo;
 
 // 引入汇编函数
 
@@ -55,24 +62,22 @@ void putfont8(unsigned char *vram, int xsize, int x, int y, char color, unsigned
 
 void putfonts8_asc(unsigned char *vram, int xsize, int x, int y, char color, char *s);
 
-struct BootInfo {
-  char cyls, leds, vmode, reserve;
-  short scrnx, scrny;
-  unsigned char *vram;
-};
+void putfonts8_asc_binfo(BootInfo *binfo, int x, int y, char c, char *s);
 
 void OSMain(void)
 {
   unsigned char *vram;
   // int xsize, ysize;
-  struct BootInfo *binfo;
+  // struct BootInfo *binfo;
+  BootInfo *binfo;
 
   // 设定调色板
   init_palette();
 
   // 需要初始化指针变量
   // 即 binfo = 0xfff0; // asmhead.nas 中 CYLS 启动区的位置
-  binfo = (struct BootInfo *) 0x0ff0;
+  // binfo = (struct BootInfo *) 0x0ff0;
+  binfo = (BootInfo *) 0x0ff0;
 
   // 不能省略为 *binfo.scrnx 会被解释为 *(binfo.scrnx)
   // xsize = (*binfo).scrnx;
@@ -93,6 +98,11 @@ void OSMain(void)
   // char data[] = "Hello TinyOS";
   putfonts8_asc(binfo->vram, binfo->scrnx, 8,  8, BLACK, "Hello TinyOS");
   putfonts8_asc(binfo->vram, binfo->scrnx, 0, 24, PURPLE, "Convert String to ASCII Value in Python");
+
+  // char *s = NULL;
+  char s[40];
+  sprintf(s, "scrnx = %d", binfo->scrnx);
+  putfonts8_asc_binfo(binfo, 0, 32, PURPLE, s);
 
   boxfill8(vram, 320, COL8_FF0000, 20, 20, 120, 120);
   boxfill8(vram, 320, COL8_00FF00, 70, 50, 170, 150);
@@ -251,4 +261,8 @@ void putfonts8_asc(unsigned char *vram, int xsize, int x, int y, char c, char *s
     x += 8;
   }
   return;
+}
+
+void putfonts8_asc_binfo(BootInfo *binfo, int x, int y, char c, char *s) {
+  putfonts8_asc(binfo->vram, binfo->scrnx, x, y, c, s);
 }
