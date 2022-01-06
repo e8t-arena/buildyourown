@@ -569,8 +569,11 @@ use -I<dir_path> to gcc when compiling
 ${LD} -m elf_i386 -o $@ -Ttext 0x00280000 $^ --oformat binary -L${INC_DIR} ${LIB_OPT
   -L library_path -llibrary_name
 
-05_day/harib02a_h 4793394
+05_day/harib02h 4793394
 
+8. 显示鼠标
+
+05_day/harib02g 4793394
 
 # Day5
 # Day5
