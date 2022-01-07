@@ -24,7 +24,7 @@ CFLAGS = -g -m32 -nostdlib -nostdinc -fno-builtin -fno-stack-protector -nostartf
 		 -Wall -Wextra
 
 INC_DIR = ../includes/golibc
-LIB_OPT = -Lgolibc
+LIB_OPT = -lgolibc
 
 DISK=disk2
 TINY_DISK=/dev/$(DISK)
@@ -47,7 +47,7 @@ hankaku.o: hankaku_need_to_redefine_symbol_name.o
 
 os.bin: ${OBJ}
 	# ${LD} -o $@ -Ttext 0x00280000 $^ --oformat binary
-	${LD} -m elf_i386 -o $@ -Ttext 0x00280000 $^ --oformat binary -L${INC_DIR} ${LIB_OPT}
+	${LD} -m elf_i386 -o $@ -Ttext 0x00280000 $^ --oformat binary -L ${INC_DIR} ${LIB_OPT}
 
 asmhead.bin: asmhead.nas
 	${ASMC} $< -f bin -o $@
