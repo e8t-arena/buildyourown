@@ -58,11 +58,15 @@ void draw_more(unsigned char *vram, int xsize, int (*ui)[UI_SIZE], int ui_size);
 
 void init_screen(unsigned char *vram, int xsize, int ysize);
 
+void init_mouse_cursor8(char *mouse, char bc);
+
 void putfont8(unsigned char *vram, int xsize, int x, int y, char color, unsigned char *font);
 
 void putfonts8_asc(unsigned char *vram, int xsize, int x, int y, char color, char *s);
 
 void putfonts8_asc_binfo(BootInfo *binfo, int x, int y, char c, char *s);
+
+void putblock8_8(BootInfo *binfo, int pxsize, int pysize, int px0, int py0, char *buf, int bxsize);
 
 void OSMain(void)
 {
@@ -104,9 +108,16 @@ void OSMain(void)
   sprintf(s, "scrnx = %d", binfo->scrnx);
   putfonts8_asc_binfo(binfo, 0, 32, PURPLE, s);
 
-  boxfill8(vram, 320, COL8_FF0000, 20, 20, 120, 120);
-  boxfill8(vram, 320, COL8_00FF00, 70, 50, 170, 150);
-  boxfill8(vram, 320, COL8_0000FF, 120, 80, 220, 180);
+  // boxfill8(vram, 320, COL8_FF0000, 20, 20, 120, 120);
+  // boxfill8(vram, 320, COL8_00FF00, 70, 50, 170, 150);
+  // boxfill8(vram, 320, COL8_0000FF, 120, 80, 220, 180);
+
+  char mcursor[256];
+  int mx, my;
+  mx = (binfo->scrnx - 16)/2;
+  my = (binfo->scrny - 28 - 16)/2;
+  init_mouse_cursor8(mcursor, COL8_008484);
+  putblock8_8(binfo, 16, 16, mx, my, mcursor, 16);
 
   for (;;) {
     io_hlt();
@@ -265,4 +276,53 @@ void putfonts8_asc(unsigned char *vram, int xsize, int x, int y, char c, char *s
 
 void putfonts8_asc_binfo(BootInfo *binfo, int x, int y, char c, char *s) {
   putfonts8_asc(binfo->vram, binfo->scrnx, x, y, c, s);
+}
+
+void init_mouse_cursor8(char *mouse, char bc) {
+  // 16 x 16 鼠标
+  static char cursor[16][16] = {
+    "**************..",
+    "*OOOOOOOOOOO*...",
+    "*OOOOOOOOOO*....",
+    "*OOOOOOOOO*.....",
+    "*OOOOOOOO*......",
+    "*OOOOOOO*.......",
+    "*OOOOOOO*.......",
+    "*OOOOOOOO*......",
+    "*OOOO**OOO*.....",
+    "*OOO*..*OOO*....",
+    "*OO*....*OOO*...",
+    "*O*......*OOO*..",
+    "**........*OOO*.",
+    "*..........*OOO*",
+    "............*OO*",
+    ".............***",
+  };
+  int x, y;
+  for(y = 0; y < 16; y++) {
+    for(x = 0; x < 16; x++) {
+      if (cursor[y][x] == '*') {
+        mouse[y * 16 + x] = COL8_000000;
+      }
+      if (cursor[y][x] == 'O') {
+        mouse[y * 16 + x] = COL8_FFFFFF;
+      }
+      if (cursor[y][x] == '.') {
+        mouse[y * 16 + x] = bc;
+      }
+    }
+  }
+  return;
+}
+
+// buf 图形存放地址
+// bxsize 每行像素数
+void putblock8_8(BootInfo *binfo, int pxsize, int pysize, int px0, int py0, char *buf, int bxsize) {
+  int x, y;
+  for(y = 0; y < pysize; y++) {
+    for(x = 0; x < pxsize; x++) {
+      binfo->vram[(py0 + y) * binfo->scrnx + (px0 + x)] = buf[y * bxsize + x];
+    }
+  }
+  return;
 }
